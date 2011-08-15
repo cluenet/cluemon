@@ -458,7 +458,7 @@ sub get_servers {
 
 		# ldap_server_config hash we send to parse_server_config
 		my $ldap_server_config = {};
-		$ldap_server_config->{'name'} = $name; 
+		$ldap_server_config->{'name'} = $name;
 		$ldap_server_config->{'ip'} = $ip_address;
 		$ldap_server_config->{'ssh_port'} = $ssh_port;
 		$ldap_server_config->{'owner'} = $owner;
@@ -1024,7 +1024,7 @@ sub build_contacts_config {
 	# Actual contacts
 	for my $user ( keys(%$users) ) {
 		my $udata = $users->{$user};
-		
+
 		$contacts_config .= "#  " . $user . "\n";
 		$contacts_config .= "define contact {\n";
 		$contacts_config .= "\tcontact_name " . $user . "\n";
@@ -1238,7 +1238,8 @@ sub build_service_definition {
 	$service_config = "define serviceextinfo {\n";
 	$service_config .= "\thost_name " . $hostname . "\n";
 	$service_config .= "\tservice_description " . $sdata->{'description'} . "\n";
-	$service_config .= "\tnotes_url " . '/nagios/cgi-bin/show.cgi?host=\$HOSTNAME\$&service=\$SERVICEDESC\$' . "\n";
+	$service_config .= "\tnotes_url " . '/nagios/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$';
+	$service_config .= "onMouseOver='showGraphPopup(this)' onMouseOut='hideGraphPopup()'\n";
 	$service_config .= "}\n";
 
 	return $service_config;
