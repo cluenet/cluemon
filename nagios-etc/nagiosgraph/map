@@ -1,0 +1,202 @@
+/output:CHECK_NRPE: Socket timeout/
+and return ('ignore');
+
+/output:NRPE: Unable to read output/
+and return ('ignore');
+
+/output:CRITICAL - Socket timeout after/
+and return ('ignore');
+
+/output:CRITICAL - Plugin timed out after/
+and return ('ignore');
+
+/output:NTP CRITICAL: No response from NTP server/
+and return ('ignore');
+
+/output:Connection refused/
+and return ('ignore');
+
+/output:.*plugin may be missing/
+and return ('ignore');
+
+/output:.*Host Unreachable/
+and return ('ignore');
+
+/output:Connection to \S+ failed/
+and return ('ignore');
+
+/output:.*timed out waiting for/
+and return ('ignore');
+
+###############################################################################
+
+# Service type: unix-netstat
+#   output:OK
+#   perfdata:udpInDatagrams=46517147, udpOutDatagrams=46192507, udpInErrors=0,
+#   tcpActiveOpens=1451583, tcpPassiveOpens=1076181, tcpAttemptFails=1909,
+#   tcpEstabResets=5045, tcpCurrEstab=6, tcpOutDataBytes=3162434373,
+#   tcpInDataBytes=1942718261, tcpRetransBytes=215439
+/perfdata:.*udpInDatagrams=(\d+), udpOutDatagrams=(\d+), udpInErrors=(\d+), tcpActiveOpens=(\d+), tcpPassiveOpens=(\d+), tcpAttemptFails=(\d+), tcpEstabResets=(\d+), tcpCurrEstab=(\d+), tcpOutDataBytes=(\d+), tcpInDataBytes=(\d+), tcpRetransBytes=(\d+)/
+and push @s, [ 'udp',
+               [ 'InPkts',  DERIVE, int $1/300 ],
+               [ 'OutPkts', DERIVE, int $2/300 ],
+               [ 'Errors',  DERIVE, int $3/300 ] ],
+             [ 'tcp',
+               [ 'ActOpens',    DERIVE, int $4/300    ],
+               [ 'PsvOpens',    DERIVE, int $5/300    ],
+               [ 'AttmptFails', DERIVE, int $6/300    ],
+               [ 'OutBytes',    DERIVE, int $9/300*8  ],
+               [ 'InBytes',     DERIVE, int $10/300*8 ] ];
+
+# Service type: unix-ntp
+#   output:NTP OK: Offset 0.001083 secs
+# perfdata:offset=1032.98s;60.00000;120.00000;
+#
+#   output:NTP OK: Offset 0.001083 secs, jitter 14.84 msec, peer is stratum 1
+#
+#   output:NTP OK: Offset 0.001083 secs
+#
+# Some ntp plugins return only output, others return perfdata.  Some return
+# only the offset, while others return jitter and stratum as well.  If there
+# is perfdata, skip it and let the generic rule catch it.  If not, get as
+# much as we can from the output.
+(/output:NTP/ and /perfdata:\s*offset=/)
+or
+(/output:NTP.*Offset ([-.0-9]+).*jitter ([-.0-9]+).*stratum (\d+)/
+and push @s, [ 'ntp',
+               [ 'offset',  GAUGE, $1      ],
+               [ 'jitter',  GAUGE, $2/1000 ],
+               [ 'stratum', GAUGE, $3+1    ] ])
+or
+(/output:NTP.*Offset ([-.0-9]+) secs/
+and push @s, [ 'ntp',
+               [ 'offset',  GAUGE, $1 ] ]);
+
+# Service type: unix uptime
+#   output:OK - uptime is 36 Days, 2 Hours, 42 Minutes
+/output:.*uptime is.*?([.\d]+)\sDays/
+and push @s, [ 'days',
+               [ 'data', GAUGE, $1 ] ]
+or (/output:.*uptime is.*?([.\d]+)\sHours/
+    and push @s, [ 'days',
+               [ 'data', GAUGE, $1/24 ] ])
+or (/output:.*uptime is.*?([.\d]+)\sMinutes/
+    and push @s, [ 'days',
+               [ 'data', GAUGE, $1/1440 ] ]);
+
+# Service type: unix-procs
+#   output:PROCS OK: 43 processes
+(/output:PROCS.*?(\d+) processes\n/ or
+ /output:PROCS.*?(\d+) processes with STATE = RSZDT/)
+and push @s, [ 'procs',
+               [ 'data', GAUGE, $1 ] ];
+
+# Service type: unix-zombies
+#   ouput:PROCS OK: 0 processes with STATE = Z
+/output:PROCS.*?(\d+) processes with STATE = Z/
+and push @s, [ 'zombies',
+               [ 'data', GAUGE, $1 ] ];
+
+# default rule.  if none of the other rules did anything, then check for
+# perfdata that meets the standard format.
+#
+#   label=value[UOM];[warn];[crit];[min];[max]
+#
+# if units are KB, MB, TB, PB then convert to B
+# if units are ms or us then convert to s
+# if units is counter, then use type DERIVE (DS min will be 0)
+#
+# warn and crit have range format:
+#
+# 10         < 0 or > 10
+# 10:        < 10
+# ~:10       > 10
+# 10:20      < 10 or > 20
+# @10:20     >= 10 and <= 20
+# 
+(! @s || $#s < 0) and /perfdata:(.+)/ and do {
+    my $pd = $1;
+    while ( $pd =~ s/([^=]+)=(\S+)// ) {
+        my ($n,$y) = ($1,$2);
+        next if (!defined $n || $n eq q());
+        my ($v,$u,$x) = $y =~ /([-0-9.]+)([^;]*)(.*)/;
+        next if (!defined $v || $v eq q());
+        my ($w,$c,$min,$max);
+        if (defined $x && $x ne q()) {
+            $x =~ s/^;//;
+            ($w,$c,$min,$max) = split /;/, $x;
+        }
+        $n =~ s/^\s+//g;
+        $n =~ s/\s+$//g;
+        $n =~ s/^\'//g;
+        $n =~ s/\'$//g;
+        $n =~ s/\'\'/\'/g;
+        my ($wlo, $whi);
+        if (defined $w && $w ne q()) {
+            if ($w =~ /([-0-9.]+):([-0-9.]+)/) {
+                $wlo = $1; $whi = $2; $w = q();
+            } elsif ($w =~ /([-0-9.]+):/) {
+                $whi = $1; $w = q();
+            } elsif ($w =~ /:([-0-9.]+)/) {
+                $wlo = $1; $w = q();
+            }
+        }
+        my ($clo, $chi);
+        if (defined $c && $c ne q()) {
+            if ($c =~ /([-0-9.]+):([-0-9.]+)/) {
+                $clo = $1; $chi = $2; $c = q();
+            } elsif ($c =~ /([-0-9.]+):/) {
+                $chi = $1; $c = q();
+            } elsif ($c =~ /:([-0-9.]+)/) {
+                $clo = $1; $c = q();
+            }
+        }
+        my $t = 'GAUGE';
+        if (defined $u) {
+            my $mult = 1;
+            if ($u eq 'c') {
+                $t = 'DERIVE';
+            } elsif ($u eq 's') {
+                $mult = 1;
+            } elsif ($u eq 'ms') {
+                $mult = 1 / 1_000;
+            } elsif ($u eq 'us') {
+                $mult = 1 / 1_000_000;
+            } elsif ($u eq 'B') {
+                $mult = 1;
+            } elsif ($u eq 'KB' || $u eq 'K' || $u eq 'kB') {
+                $mult = 1024;
+            } elsif ($u eq 'MB' || $u eq 'M' || $u eq 'mB') {
+                $mult = 1024 * 1024;
+            } elsif ($u eq 'GB' || $u eq 'G' || $u eq 'gB') {
+                $mult = 1024 * 1024 * 1024;
+            } elsif ($u eq 'TB' || $u eq 'T' || $u eq 'tB') {
+                $mult = 1024 * 1024 * 1024 * 1024;
+            } elsif ($u eq 'PB' || $u eq 'P' || $u eq 'pB') {
+                $mult = 1024 * 1024 * 1024 * 1024 * 1024;
+            }
+            if ($mult != 1) {
+                $v *= $mult;
+                if ( defined $w && $w ne q()) { $w *= $mult; }
+                if ( defined $c && $c ne q()) { $c *= $mult; }
+                if ( defined $min && $min ne q()) { $min *= $mult; }
+                if ( defined $max && $max ne q()) { $max *= $mult; }
+                if ( defined $wlo && $wlo ne q()) { $wlo *= $mult; }
+                if ( defined $whi && $whi ne q()) { $whi *= $mult; }
+                if ( defined $clo && $clo ne q()) { $clo *= $mult; }
+                if ( defined $chi && $chi ne q()) { $chi *= $mult; }
+            }
+        }
+        my @x;
+        push @x, [ 'data', $t, $v ];
+        push @x, [ 'warn', $t, $w ] if defined $w && $w ne q();
+        push @x, [ 'crit', $t, $c ] if defined $c && $c ne q();
+        push @x, [ 'min', $t, $min ] if defined $min && $min ne q();
+        push @x, [ 'max', $t, $max ] if defined $max && $max ne q();
+        push @x, [ 'warn_lo', $t, $wlo ] if defined $wlo && $wlo ne q();
+        push @x, [ 'warn_hi', $t, $whi ] if defined $whi && $whi ne q();
+        push @x, [ 'crit_lo', $t, $clo ] if defined $clo && $clo ne q();
+        push @x, [ 'crit_hi', $t, $chi ] if defined $chi && $chi ne q();
+        push @s, [ $n, @x ];
+    }
+};
