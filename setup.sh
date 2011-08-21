@@ -56,7 +56,7 @@ fi
 
 echo "Extracting source code";
 mkdir "/usr/local/src/nagios"
-tar -xvf /usr/local/src/nagios.tar.gz -C /usr/local/src/nagios;
+tar -xvf /usr/local/src/nagios.tar.gz -C /usr/local/src/nagios --strip 1;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios core";
@@ -64,7 +64,7 @@ then
 fi
 
 mkdir "/usr/local/src/nagios-plugins"
-tar -xvf /usr/local/src/nagios-plugins.tar.gz -C /usr/local/src/nagios-plugins;
+tar -xvf /usr/local/src/nagios-plugins.tar.gz -C /usr/local/src/nagios-plugins --strip 1;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios plugins";
@@ -72,7 +72,7 @@ then
 fi
 
 mkdir "/usr/local/src/nagiosgraph"
-tar -xvf /usr/local/src/nagiosgraph.tar.gz -C /usr/local/src/nagiosgraph;
+tar -xvf /usr/local/src/nagiosgraph.tar.gz -C /usr/local/src/nagiosgraph --strip 1;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios graph";
@@ -94,7 +94,7 @@ then
 fi
 
 adduser --system --home=/usr/local/nagios --shell=/bin/false \
-	--disabled-password --disabled-login --group=nagios nagios;
+	--disabled-password --disabled-login --group nagios nagios;
 
 echo "Compiling nagios core";
 cd '/usr/local/src/nagios';
@@ -131,6 +131,10 @@ cp share/graph.gif /usr/local/nagios/share/images/action.gif
 sed -i 's|/nagiosgraph/nagiosgraph.js|/nagios/nagiosgraph.js|' share/nagiosgraph.ssi
 cp share/nagiosgraph.ssi /usr/local/nagios/share/ssi/common-header.ssi
 cd ..;
+
+echo "Downloading cluemon"
+git clone git://github.com/cluenet/cluemon.git /usr/local/src/cluemon
+cd /usr/local/src/cluemon/
 
 echo "Installing configs";
 rm -rvf /usr/local/nagios/etc/*;
@@ -236,6 +240,7 @@ cat > /etc/apache2/sites-enabled/nagios <<"EOF"
 </VirtualHost>
 EOF
 /etc/init.d/apache2 restart
+supervisorctl reread
 
 echo "Running rebuild";
 /usr/local/bin/rebuild_nagios.pl;
