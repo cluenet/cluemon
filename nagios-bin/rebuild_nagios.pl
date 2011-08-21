@@ -7,7 +7,7 @@ use strict;
 use Log::Log4perl;
 
 # For strftime
-use POSIX;
+use POSIX qw(strftime);
 
 # For flock
 use Fcntl qw(:flock);
@@ -61,7 +61,7 @@ Damian Zaremba <damian@damianzaremba.co.uk>.
 
 =head1 CHANGE LOG
 * v0.1 - 15 Aug 2011
-  - Initial version
+	- Initial version
 
 =head1 LICENSE
 This program is free software: you can redistribute it and/or modify
@@ -71,15 +71,15 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 =head1 CONFIG
 
-Hash of our config valies
+Hash of our config values
 
 =head2 Required options
 
@@ -137,7 +137,6 @@ Returns nothing.
 
 =cut
 
-# Subs
 sub run {
 	# Setup the logger object
 	Log::Log4perl->easy_init();
@@ -151,8 +150,8 @@ sub run {
 
 	# Try and get a lock
 	my $lock_fh;
-	if( !open($lock_fh, '>', $config->{'config_dir'} . 'rebuild.flock') ) {
-		$logger->fatal("Cannot open file handler on " . $config->{'config_dir'} . 'rebuild.flock');
+	if( !open($lock_fh, '>', $config->{'config_dir'} . '/rebuild.flock') ) {
+		$logger->fatal("Cannot open file handler on " . $config->{'config_dir'} . '/rebuild.flock');
 		exit(4);
 	}
 
@@ -932,7 +931,7 @@ sub write_configs {
 
 				# Call the service sub and adds it return data
 				$logger->info("Starting build_service_config for " . $service . " (" . $server . ")");
-				$host .=  $dispatch->{$service}->($server, $sdata);
+				$host .= $dispatch->{$service}->($server, $sdata);
 			}
 		}
 
@@ -997,7 +996,7 @@ sub build_contacts_config {
 	my $contacts_config = "";
 
 	# Magic contacts
-	$contacts_config .= "#  __nagiosbot_twitter__\n";
+	$contacts_config .= "# __nagiosbot_twitter__\n";
 	$contacts_config .= "define contact {\n";
 	$contacts_config .= "\tcontact_name __nagiosbot_twitter__\n";
 	$contacts_config .= "\talias Twitter relay bot\n";
@@ -1009,7 +1008,7 @@ sub build_contacts_config {
 	$contacts_config .= "\thost_notification_options d,u,r,f,s\n";
 	$contacts_config .= "}\n\n";
 
-	$contacts_config .= "#  __nagiosbot_irc__\n";
+	$contacts_config .= "# __nagiosbot_irc__\n";
 	$contacts_config .= "define contact {\n";
 	$contacts_config .= "\tcontact_name __nagiosbot_irc__\n";
 	$contacts_config .= "\talias IRC relay bot\n";
@@ -1025,7 +1024,7 @@ sub build_contacts_config {
 	for my $user ( keys(%$users) ) {
 		my $udata = $users->{$user};
 
-		$contacts_config .= "#  " . $user . "\n";
+		$contacts_config .= "# " . $user . "\n";
 		$contacts_config .= "define contact {\n";
 		$contacts_config .= "\tcontact_name " . $user . "\n";
 		$contacts_config .= "\talias " . $udata->{'full_name'} . "\n";
