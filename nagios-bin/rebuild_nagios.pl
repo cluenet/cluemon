@@ -50,7 +50,7 @@ This script does the following (in order):
 9) Restarts nagios if the reload failed
 
 The script should be run by cron every hour (or w/e you want).
-It uses flock to ensure the script doesn't make a mess by running at the same time.
+It uses flock to ensure the script doesn"t make a mess by running at the same time.
 
 =head1 SOURCE
 Git repo: https://github.com/cluenet/cluemon
@@ -93,18 +93,18 @@ admins - Array of ClueNet/Monitoring admins
 
 # Config stuff
 my $config = {
-	config_dir => '/usr/local/nagios/etc/cluenet/',
-	cgi_config => '/usr/local/nagios/etc/cgi.cfg',
-	wiki_url => 'http://cluenet.org/cluewiki/api.php',
+	config_dir => "/usr/local/nagios/etc/cluenet/",
+	cgi_config => "/usr/local/nagios/etc/cgi.cfg",
+	wiki_url => "http://cluenet.org/cluewiki/api.php",
 	relay_port => 3843,
 	admins => [
-		'damian',
-		'rsmithy',
-		'cobi',
-		'crispy',
+		"damian",
+		"rsmithy",
+		"cobi",
+		"crispy",
 	],
 };
-my $VERSION = '0.1';
+my $VERSION = "0.1";
 
 # Stuff we need everywhere
 our($logger, $ldap);
@@ -123,7 +123,7 @@ Returns a string of the timestamp.
 =cut
 
 sub pretty_time {
-	return POSIX::strftime('%d/%m/%Y %H:%M:%S\n', localtime);
+	return POSIX::strftime("%d/%m/%Y %H:%M:%S\n", localtime);
 }
 
 =head2 run
@@ -142,60 +142,60 @@ sub run {
 	Log::Log4perl->easy_init();
 	$logger = Log::Log4perl->get_logger();
 
-	# Error if we couldn't initialize the logger oject
+	# Error if we couldn"t initialize the logger oject
 	if( ! defined( $logger ) ) {
-		print '!!! Could not init logger !!!\n';
+		print "!!! Could not init logger !!!\n";
 		exit(1);
 	}
 
 	# Try and get a lock
 	my $lock_fh;
-	if( !open($lock_fh, '>', $config->{'config_dir'} . '/rebuild.flock') ) {
-		$logger->fatal('Cannot open file handler on ' . $config->{'config_dir'} . '/rebuild.flock');
+	if( !open($lock_fh, ">", $config->{"config_dir"} . "/rebuild.flock") ) {
+		$logger->fatal("Cannot open file handler on " . $config->{"config_dir"} . "/rebuild.flock");
 		exit(4);
 	}
 
 	if( !flock($lock_fh, LOCK_EX) ) {
-		$logger->fatal('Process appears to be running already');
+		$logger->fatal("Process appears to be running already");
 		exit(4);
 	}
 
 	# Error if there was no config_dir specified in the config
-	if( ! defined( $config->{'config_dir'} ) ) {
-		$logger->fatal('No config_dir was specified');
+	if( ! defined( $config->{"config_dir"} ) ) {
+		$logger->fatal("No config_dir was specified");
 		exit(3);
 	}
 
 	# Error if there was no cgi_config specified in the config
-	if( ! defined( $config->{'cgi_config'} ) ) {
-		$logger->fatal('No cgi_config was specified');
+	if( ! defined( $config->{"cgi_config"} ) ) {
+		$logger->fatal("No cgi_config was specified");
 		exit(3);
 	}
 
 	# Error if there was no wiki_url specified in the config
-	if( ! defined( $config->{'wiki_url'} ) ) {
-		$logger->fatal('No wiki_url was specified');
+	if( ! defined( $config->{"wiki_url"} ) ) {
+		$logger->fatal("No wiki_url was specified");
 		exit(3);
 	}
 
 	# Error if there was no relay_port specified in the config
-	if( ! defined( $config->{'relay_port'} ) ) {
-		$logger->fatal('No relay_port was specified');
+	if( ! defined( $config->{"relay_port"} ) ) {
+		$logger->fatal("No relay_port was specified");
 		exit(3);
 	}
 
 	# Error if there was no admins specified in the config
-	if( ! defined( $config->{'admins'} ) ) {
-		$logger->fatal('No admins where specified');
+	if( ! defined( $config->{"admins"} ) ) {
+		$logger->fatal("No admins where specified");
 		exit(3);
 	}
 
 	# Try and connect to ldap
-	$ldap = Net::LDAP->new('ldap.cluenet.org', timeout => 10);
+	$ldap = Net::LDAP->new("ldap.cluenet.org", timeout => 10);
 
 	# Error if the ldap connection failed
 	if( ! defined( $ldap ) ) {
-		$logger->fatal('Could not connect to ldap: $@');
+		$logger->fatal("Could not connect to ldap: $@");
 		exit(2);
 	}
 
@@ -213,8 +213,8 @@ sub run {
 	reload_nagios();
 
 	if( !flock($lock_fh, LOCK_UN) ) {
-		$logger->error('Could not unlock rebuild.flock file');
-		notify_irc('Could not unlock rebuild.flock file: $!');
+		$logger->error("Could not unlock rebuild.flock file");
+		notify_irc("Could not unlock rebuild.flock file: $!");
 	}
 	close($lock_fh);
 }
@@ -236,32 +236,32 @@ sub notify_irc {
 
 	# Check we have a message to send
 	if( ! $message ) {
-		$logger->error('No message supplied for IRC relay');
+		$logger->error("No message supplied for IRC relay");
 		return;
 	}
 
 	# Try and open up a socket to the relay port
 	my $socket = IO::Socket::INET->new(
-		PeerAddr => '127.0.0.1',
-		PeerPort => $config->{'relay_port'},
-		Proto => 'udp',
+		PeerAddr => "127.0.0.1",
+		PeerPort => $config->{"relay_port"},
+		Proto => "udp",
 	);
 
-	# Error if we couldn't open the socket
+	# Error if we couldn"t open the socket
 	if( ! defined( $socket ) ) {
-		$logger->error('Could not open socket for IRC relay: $@');
+		$logger->error("Could not open socket for IRC relay: $@");
 		return;
 	}
 
 	# Stick on the rebuild tag - this is so the bot knows where it came from
-	$message = 'rebuild||~||$message';
+	$message = "rebuild||~||" . $message;
 
 	# Try and send the message, if not throw back an error
 	if( ! $socket->send( $message ) ) {
-		$logger->error('Could not send message to IRC relay: $!');
+		$logger->error("Could not send message to IRC relay: $!");
 		return;
 	} else {
-		$logger->info('"' . $message . '" sent to IRC relay');
+		$logger->info("'" . $message . "' sent to IRC relay");
 		return;
 	}
 }
@@ -284,29 +284,29 @@ sub get_users {
 	for my $hostname ( keys(%$servers) ) {
 		my $server = $servers->{$hostname};
 
-		if( !defined( $users_config->{$server->{'owner'}} ) ) {
-			$users_config->{$server->{'owner'} . '@CLUENET.ORG'} = {
-				username => $server->{'owner'},
+		if( !defined( $users_config->{$server->{"owner"}} ) ) {
+			$users_config->{$server->{"owner"} . "@CLUENET.ORG"} = {
+				username => $server->{"owner"},
 				dummy => 1,
 			};
 
-			$users_config->{$server->{'owner'} . '-' . $server->{'name'}} = {
-				username => $server->{'owner'},
-				server => $server->{'name'}
+			$users_config->{$server->{"owner"} . "-" . $server->{"name"}} = {
+				username => $server->{"owner"},
+				server => $server->{"name"}
 			};
 		}
 
-		if( $server->{'admins'} ) {
-			for my $username ( @{ $server->{'admins'} } ) {
+		if( $server->{"admins"} ) {
+			for my $username ( @{ $server->{"admins"} } ) {
 				if( !defined( $users_config->{$hostname} ) ) {
-					$users_config->{$username . '@CLUENET.ORG'} = {
+					$users_config->{$username . "@CLUENET.ORG"} = {
 						username => $username,
 						dummy => 1,
 					};
 
-					$users_config->{$username . '-' . $server->{'name'}} = {
+					$users_config->{$username . "-" . $server->{"name"}} = {
 						username => $username,
-						server => $server->{'name'}
+						server => $server->{"name"}
 					};
 				}
 			}
@@ -318,28 +318,28 @@ sub get_users {
 		my $user = $users_config->{$username};
 
 		my $mesg = $ldap->search(
-			filter => '(&(!(|(objectClass=suspendedUser)(objectClass=deletedUser)))(objectClass=person)(uid=' . $user->{'username'} . '))',
-			base => 'ou=people,dc=cluenet,dc=org',
+			filter => "(&(!(|(objectClass=suspendedUser)(objectClass=deletedUser)))(objectClass=person)(uid=" . $user->{"username"} . "))",
+			base => "ou=people,dc=cluenet,dc=org",
 
 			# We only need these attrs
 			attrs => [
-				'mail',
-				'gecos',
-				'cn',
+				"mail",
+				"gecos",
+				"cn",
 			],
 		);
 
 		for my $user ( $mesg->entries ) {
-			$ldap_user_config->{'mail'} = $user->get_value('mail');
-			$ldap_user_config->{'gecos'} = $user->get_value('gecos');
-			$ldap_user_config->{'cn'} = $user->get_value('cn');
+			$ldap_user_config->{"mail"} = $user->get_value("mail");
+			$ldap_user_config->{"gecos"} = $user->get_value("gecos");
+			$ldap_user_config->{"cn"} = $user->get_value("cn");
 
-			$ldap_user_config->{'dummy'} = $users_config->{$username}->{'dummy'} if $users_config->{$username}->{'dummy'};
-			$ldap_user_config->{'server'} = $users_config->{$username}->{'server'} if $users_config->{$username}->{'server'};
+			$ldap_user_config->{"dummy"} = $users_config->{$username}->{"dummy"} if $users_config->{$username}->{"dummy"};
+			$ldap_user_config->{"server"} = $users_config->{$username}->{"server"} if $users_config->{$username}->{"server"};
 		}
 
 		# Get the wiki_user_config hash from get_config
-		my $wiki_user_config = &get_config('User:' . $user->{'username'} . '/cluemon.js');
+		my $wiki_user_config = &get_config("User:" . $user->{"username"} . "/cluemon.js");
 
 		# Mash the configs together
 		$users_config->{$username} = parse_user_config($wiki_user_config, $ldap_user_config);
@@ -365,18 +365,18 @@ sub get_servers {
 
 	# Get all active servers from LDAP
 	my $response = $ldap->search(
-		filter => '(&(objectClass=server)(isActive=TRUE))',
-		base => 'ou=servers,dc=cluenet,dc=org',
+		filter => "(&(objectClass=server)(isActive=TRUE))",
+		base => "ou=servers,dc=cluenet,dc=org",
 
 		# We only need these attrs
 		attrs => [
-			'cn',
-			'ipAddress',
-			'ipv6Address',
-			'ipHostNumber',
-			'operatingSystem',
-			'owner',
-			'authorizedAdministrator',
+			"cn",
+			"ipAddress",
+			"ipv6Address",
+			"ipHostNumber",
+			"operatingSystem",
+			"owner",
+			"authorizedAdministrator",
 		],
 	);
 
@@ -384,39 +384,39 @@ sub get_servers {
 	for my $server ( $response->entries ) {
 
 		# Check the entry has a CN (sanity check)
-		my $cn = $server->get_value('cn');
+		my $cn = $server->get_value("cn");
 		if( !$cn ) {
 			# Error and skip if no cn
-			$logger->info('Skipping "' . $server->{'asn'}->{'objectName'} . '", no CN found');
+			$logger->info("Skipping '" . $server->{"asn"}->{"objectName"} . "', no CN found");
 			next;
 		}
 
 		# Check the entry has an ipAddress specified
-		my $ip_address = $server->get_value('ipAddress');
+		my $ip_address = $server->get_value("ipAddress");
 		if( !$ip_address ) {
 
 			# If no ipAddress try and get the ipHostNumber
-			$ip_address = $server->get_value('ipHostNumber');
-			if( !$ip_address || $ip_address eq '0.0.0.0' ) {
+			$ip_address = $server->get_value("ipHostNumber");
+			if( !$ip_address || $ip_address eq "0.0.0.0" ) {
 
 				# If no ipAddress or ipHostNumber then try and get the ipv6Address
-				$ip_address = $server->get_value('ipv6Address');
+				$ip_address = $server->get_value("ipv6Address");
 				if( !$ip_address ) {
 					# No ip address found, skip
-					$logger->info('Skipping "' . $server->{'asn'}->{'objectName'} . '", no IP address found');
+					$logger->info("Skipping '" . $server->{"asn"}->{"objectName"} . "', no IP address found");
 					next;
 				}
 			}
 		}
 
 		# Check the server has an owner (sanity check)
-		my $owner = $server->get_value('owner');
+		my $owner = $server->get_value("owner");
 
 		# We only want the username so get rid of the container info
 		$owner =~ s/uid=(.*),ou=people,dc=cluenet,dc=org/$1/;
 		if( !$owner ) {
 			# Error and skip if no owner
-			$logger->info('Skipping "' . $server->{'asn'}->{'objectName'} . '", no owner found');
+			$logger->info("Skipping '" . $server->{"asn"}->{"objectName"} . "', no owner found");
 			next;
 		}
 
@@ -424,7 +424,7 @@ sub get_servers {
 		my $admins = [];
 
 		# Check if we have any authorizedAdministrator entries
-		my @authorized_admins = $server->get_value('authorizedAdministrator');
+		my @authorized_admins = $server->get_value("authorizedAdministrator");
 		if( @authorized_admins ) {
 			# Loop though the authorizedAdministrator entries
 			for my $admin (@authorized_admins) {
@@ -439,16 +439,16 @@ sub get_servers {
 		}
 
 		# Check if there is a custom SSH port set
-		my $ssh_port = $server->get_value('sshPort');
+		my $ssh_port = $server->get_value("sshPort");
 		if( !$ssh_port ) {
 			# If no ssh port then use 22 (the default)
 			$ssh_port = 22;
 		}
 
 		# Check what the OS is
-		my $os = $server->get_value('operatingSystem');
+		my $os = $server->get_value("operatingSystem");
 		if( !$os ) {
-			$os = '';
+			$os = "";
 		}
 
 		# Get the server name from the CN
@@ -457,15 +457,15 @@ sub get_servers {
 
 		# ldap_server_config hash we send to parse_server_config
 		my $ldap_server_config = {};
-		$ldap_server_config->{'name'} = $name;
-		$ldap_server_config->{'ip'} = $ip_address;
-		$ldap_server_config->{'ssh_port'} = $ssh_port;
-		$ldap_server_config->{'owner'} = $owner;
-		$ldap_server_config->{'os'} = $os;
-		$ldap_server_config->{'admins'} = $admins;
+		$ldap_server_config->{"name"} = $name;
+		$ldap_server_config->{"ip"} = $ip_address;
+		$ldap_server_config->{"ssh_port"} = $ssh_port;
+		$ldap_server_config->{"owner"} = $owner;
+		$ldap_server_config->{"os"} = $os;
+		$ldap_server_config->{"admins"} = $admins;
 
 		# Get the wiki_server_config hash from get_config
-		my $wiki_server_config = &get_config('Server:' . $name . '/cluemon');
+		my $wiki_server_config = &get_config("Server:" . $name . "/cluemon");
 
 		# Add this server into the servers hash and assign its value to the parse_server_config hash
 		$servers->{$cn} = &parse_server_config($wiki_server_config, $ldap_server_config);
@@ -496,11 +496,11 @@ sub get_config {
 	# user_agent to make the request with
 	my $user_agent = LWP::UserAgent->new(
 		timeout => 5,
-		agent => 'NagiosRebuild/v' . $VERSION,
+		agent => "NagiosRebuild/v" . $VERSION,
 	);
 
 	# URL to request
-	my $url = $config->{'wiki_url'} . '?action=query&prop=revisions&rvprop=content&rvsection=1&format=xml&titles=' . ucfirst( $page );
+	my $url = $config->{"wiki_url"} . "?action=query&prop=revisions&rvprop=content&rvsection=1&format=xml&titles=" . ucfirst( $page );
 
 	# Request object
 	my $request_object = HTTP::Request->new(
@@ -510,12 +510,12 @@ sub get_config {
 	# Make the request and store the response object
 	my $response = $user_agent->request($request_object);
 
-	# Check if we didn't get a 200OK back
+	# Check if we didn"t get a 200OK back
 	if ( ! $response->is_success ) {
-		$logger->error('Could not get ' . $url . ', server returned: ' . $response->status_line);
+		$logger->error("Could not get " . $url . ", server returned: " . $response->status_line);
 
 		# Send a notice though to IRC
-		notify_irc('Could not get ' . $url . ', server returned: ' . $response->status_line);
+		notify_irc("Could not get " . $url . ", server returned: " . $response->status_line);
 	} else {
 		# Everything was good, get the content
 		my $raw_data = $response->decoded_content;
@@ -531,23 +531,23 @@ sub get_config {
 
 		# If the XML was bad then error
 		if( $@ ) {
-			$logger->error('Could not process the api data for ' . $page . ': ' . $@);
+			$logger->error("Could not process the api data for " . $page . ": " . $@);
 
 			# Send a notice to IRC
-			notify_irc('Could not process the api data for ' . $page . ': ' . $@);
+			notify_irc("Could not process the api data for " . $page . ": " . $@);
 		} else {
 			# Check if there is a page revision (config)
 			if(
-				! defined( $data->{'query'}->{'pages'}->{'page'}->{'revisions'} ) ||
-				! defined( $data->{'query'}->{'pages'}->{'page'}->{'revisions'}->{'rev'} ) ||
-				! defined( $data->{'query'}->{'pages'}->{'page'}->{'revisions'}->{'rev'}->{'content'} )
+				! defined( $data->{"query"}->{"pages"}->{"page"}->{"revisions"} ) ||
+				! defined( $data->{"query"}->{"pages"}->{"page"}->{"revisions"}->{"rev"} ) ||
+				! defined( $data->{"query"}->{"pages"}->{"page"}->{"revisions"}->{"rev"}->{"content"} )
 			) {
-				$logger->info('No config specified at ' . $page);
+				$logger->info("No config specified at " . $page);
 			} else {
-				$logger->info('Parsing config specified at ' . $page);
+				$logger->info("Parsing config specified at " . $page);
 
 				# Assign the actual page content to the raw_data var
-				$raw_data = $data->{'query'}->{'pages'}->{'page'}->{'revisions'}->{'rev'}->{'content'};
+				$raw_data = $data->{"query"}->{"pages"}->{"page"}->{"revisions"}->{"rev"}->{"content"};
 
 				# Strip out the header
 				$raw_data =~ s/==\s*config\s*==//i;
@@ -557,7 +557,7 @@ sub get_config {
 				$raw_data =~ s/<\/pre>//;
 
 				# Add a newline at the end incase it is missing
-				$raw_data .= '\n';
+				$raw_data .= "\n";
 
 				# Data is where we will stick the config
 				my $data;
@@ -569,10 +569,10 @@ sub get_config {
 
 				# If the YAML was bad then error
 				if( $@ ) {
-					$logger->error('Could not process the config for ' . $page . ': ' . $@);
+					$logger->error("Could not process the config for " . $page . ": " . $@);
 
 					# Send a notice to IRC
-					notify_irc('Could not process the config for ' . $page . ': ' . $@);
+					notify_irc("Could not process the config for " . $page . ": " . $@);
 				} else {
 					# YAMl was good
 					$wiki_config = $data;
@@ -602,50 +602,50 @@ sub parse_user_config {
 	my $ldap_user_config = shift;
 	my $user_config = {};
 
-	$user_config->{'username'} = $ldap_user_config->{'cn'};
-	$user_config->{'full_name'} = $ldap_user_config->{'gecos'};
-	$user_config->{'email'} = $ldap_user_config->{'mail'} if $ldap_user_config->{'mail'};
-	$user_config->{'alerts'} = {};
+	$user_config->{"username"} = $ldap_user_config->{"cn"};
+	$user_config->{"full_name"} = $ldap_user_config->{"gecos"};
+	$user_config->{"email"} = $ldap_user_config->{"mail"} if $ldap_user_config->{"mail"};
+	$user_config->{"alerts"} = {};
 
 	# Check if this is a dummy - if it is we will have nothing to do with getting alerts
-	if( !defined( $ldap_user_config->{'dummy'} ) ) {
+	if( !defined( $ldap_user_config->{"dummy"} ) ) {
 
 		# Check if we have any alerts specified and we have a valid server
-		if( ref( $wiki_user_config->{'alerts'} ) eq 'HASH' && $ldap_user_config->{'server'} ) {
+		if( ref( $wiki_user_config->{"alerts"} ) eq "HASH" && $ldap_user_config->{"server"} ) {
 			#
 			# Email alerts
 			#
 
 			# Check if we have a valid email - we NEED this
-			if( $ldap_user_config->{'mail'} && Email::Valid->address( $ldap_user_config->{'mail'} ) ) {
+			if( $ldap_user_config->{"mail"} && Email::Valid->address( $ldap_user_config->{"mail"} ) ) {
 
 				# Check if we have a setting in the all section
 				if(
-					$wiki_user_config->{'alerts'} &&
-					$wiki_user_config->{'alerts'}->{'all'} &&
-					$wiki_user_config->{'alerts'}->{'all'}->{'email'} &&
-					$wiki_user_config->{'alerts'}->{'all'}->{'email'} eq 'True'
+					$wiki_user_config->{"alerts"} &&
+					$wiki_user_config->{"alerts"}->{"all"} &&
+					$wiki_user_config->{"alerts"}->{"all"}->{"email"} &&
+					$wiki_user_config->{"alerts"}->{"all"}->{"email"} eq "True"
 				) {
 
-					# We do have an all setting, now check we don't have a specified setting set to false
+					# We do have an all setting, now check we don"t have a specified setting set to false
 					if (
-						!$wiki_user_config->{'alerts'}->{ $ldap_user_config->{'server'} } ||
-						!$wiki_user_config->{'alerts'}->{ $ldap_user_config->{'server'} }->{'email'} ||
-						$wiki_user_config->{'alerts'}->{ $ldap_user_config->{'server'} }->{'email'} ne 'True'
+						!$wiki_user_config->{"alerts"}->{ $ldap_user_config->{"server"} } ||
+						!$wiki_user_config->{"alerts"}->{ $ldap_user_config->{"server"} }->{"email"} ||
+						$wiki_user_config->{"alerts"}->{ $ldap_user_config->{"server"} }->{"email"} ne "True"
 					) {
-						$user_config->{'alerts'}->{'email'} = {
-							target => $ldap_user_config->{'mail'}
+						$user_config->{"alerts"}->{"email"} = {
+							target => $ldap_user_config->{"mail"}
 						};
 					}
 				} else {
-					# Check if we have a specific entry for this server as we didn't have anything under all
+					# Check if we have a specific entry for this server as we didn"t have anything under all
 					if (
-						$wiki_user_config->{'alerts'}->{ $ldap_user_config->{'server'} } &&
-						$wiki_user_config->{'alerts'}->{ $ldap_user_config->{'server'} }->{'email'} &&
-						$wiki_user_config->{'alerts'}->{ $ldap_user_config->{'server'} }->{'email'} eq 'True'
+						$wiki_user_config->{"alerts"}->{ $ldap_user_config->{"server"} } &&
+						$wiki_user_config->{"alerts"}->{ $ldap_user_config->{"server"} }->{"email"} &&
+						$wiki_user_config->{"alerts"}->{ $ldap_user_config->{"server"} }->{"email"} eq "True"
 					) {
-						$user_config->{'alerts'}->{'email'} = {
-							target => $ldap_user_config->{'mail'}
+						$user_config->{"alerts"}->{"email"} = {
+							target => $ldap_user_config->{"mail"}
 						};
 					}
 				}
@@ -653,8 +653,8 @@ sub parse_user_config {
 		}
 	}
 
-	if( ref( $user_config->{'alerts'} ) ne 'HASH' || keys( %{ $user_config->{'alerts'} } ) eq 0 ) {
-		delete( $user_config->{'alerts'} );
+	if( ref( $user_config->{"alerts"} ) ne "HASH" || keys( %{ $user_config->{"alerts"} } ) eq 0 ) {
+		delete( $user_config->{"alerts"} );
 	}
 
 	return $user_config;
@@ -682,45 +682,45 @@ sub parse_server_config {
 	# Config hash we will fill
 	my $server_config = {};
 
-	$server_config->{'name'} = $ldap_server_config->{'name'};
-	$server_config->{'address'} = $ldap_server_config->{'ip'};
-	$server_config->{'admins'} = $ldap_server_config->{'admins'};
-	$server_config->{'owner'} = $ldap_server_config->{'owner'};
-	$server_config->{'services'} = {};
+	$server_config->{"name"} = $ldap_server_config->{"name"};
+	$server_config->{"address"} = $ldap_server_config->{"ip"};
+	$server_config->{"admins"} = $ldap_server_config->{"admins"};
+	$server_config->{"owner"} = $ldap_server_config->{"owner"};
+	$server_config->{"services"} = {};
 
 	# Lets use some default guesses
-	$server_config->{'services'}->{'ping'} = {};
+	$server_config->{"services"}->{"ping"} = {};
 
-	if( grep(/windows/i, $ldap_server_config->{'os'}) ) {
-		$server_config->{'services'}->{'rdp'} = {};
+	if( grep(/windows/i, $ldap_server_config->{"os"}) ) {
+		$server_config->{"services"}->{"rdp"} = {};
 	} else {
-		$server_config->{'services'}->{'ssh'} = {};
+		$server_config->{"services"}->{"ssh"} = {};
 	}
 
 	# Check if we have a wiki_server_config to process
-	if( ref($wiki_server_config) eq 'HASH' && keys( %$wiki_server_config ) > 0) {
+	if( ref($wiki_server_config) eq "HASH" && keys( %$wiki_server_config ) > 0) {
 		# We have stuff from the wiki... process it cleanly
 
-		if( defined( $wiki_server_config->{'server'} ) ) {
+		if( defined( $wiki_server_config->{"server"} ) ) {
 			# We have server stuff to look at, yay
 
 			# Check if there is a check_attempts specified and it is a number
-			if( $wiki_server_config->{'server'}->{'check_attempts'} ) {
-				$server_config->{'check_attempts'} = $wiki_server_config->{'server'}->{'check_attempts'};
+			if( $wiki_server_config->{"server"}->{"check_attempts"} ) {
+				$server_config->{"check_attempts"} = $wiki_server_config->{"server"}->{"check_attempts"};
 			}
 
 			# Check if there is a notification_interval specified and it is a number
-			if( $wiki_server_config->{'server'}->{'notification_interval'} ) {
-				$server_config->{'notification_interval'} = $wiki_server_config->{'server'}->{'notification_interval'};
+			if( $wiki_server_config->{"server"}->{"notification_interval"} ) {
+				$server_config->{"notification_interval"} = $wiki_server_config->{"server"}->{"notification_interval"};
 			}
 		}
 
-		if( defined( $wiki_server_config->{'services'} ) ) {
+		if( defined( $wiki_server_config->{"services"} ) ) {
 			# We have services to look at, yay
 
-			for my $service ( keys(%{ $wiki_server_config->{'services'} }) ) {
+			for my $service ( keys(%{ $wiki_server_config->{"services"} }) ) {
 				# Wiki service data
-				my $sdata = $wiki_server_config->{'services'}->{$service};
+				my $sdata = $wiki_server_config->{"services"}->{$service};
 
 				# Strip out anything dodgy looking from the service
 				$service =~ s/ /_/;
@@ -728,28 +728,28 @@ sub parse_server_config {
 
 				# Check if we have valid service/sdata
 				if( $service && $sdata ) {
-					$server_config->{'services'}->{$service} = $sdata;
+					$server_config->{"services"}->{$service} = $sdata;
 				}
 
 				# Check if this service is not enabled (used for removing default services)
 				# We actually remove all disabled services to save code duplication
 				# If there is no enabled specified then we assume it is disabled
 				if(
-					!$server_config->{'services'}->{$service} || !$sdata->{'enabled'} ||
+					!$server_config->{"services"}->{$service} || !$sdata->{"enabled"} ||
 					(
-						$server_config->{'services'}->{$service} &&
-						$sdata->{'enabled'} ne 'True'
+						$server_config->{"services"}->{$service} &&
+						$sdata->{"enabled"} ne "True"
 					)
 				) {
-					delete( $server_config->{'services'}->{$service} );
+					delete( $server_config->{"services"}->{$service} );
 				}
 			}
 		}
 	}
 
 	# Set the SSH port to what is in ldap
-	if( $server_config->{'services'}->{'ssh'} ) {
-		$server_config->{'services'}->{'ssh'}->{'port'} = $ldap_server_config->{'ssh_port'};
+	if( $server_config->{"services"}->{"ssh"} ) {
+		$server_config->{"services"}->{"ssh"}->{"port"} = $ldap_server_config->{"ssh_port"};
 	}
 
 	# Return the final config hash
@@ -768,15 +768,15 @@ Returns nothing
 =cut
 
 sub clear_configs {
-	my $cdir = $config->{'config_dir'};
-	unlink( glob( $cdir . '/*.cfg' ) );
+	my $cdir = $config->{"config_dir"};
+	unlink( glob( $cdir . "/*.cfg" ) );
 }
 
 =head2 update_admins
 Updates the cgi.cfg file with the monitoring admins.
 Basically:
 1) Reads the cgi.cfg file
-2) Turns $config->{'admins'} into a string of <admin>@CLUENET.ORG,<admin>@CLUENET.ORG
+2) Turns $config->{"admins"} into a string of <admin>@CLUENET.ORG,<admin>@CLUENET.ORG
 3) Replaces the value for:
 * authorized_for_system_information
 * authorized_for_configuration_information
@@ -796,14 +796,14 @@ sub update_admins {
 	my($fh, $data);
 
 	# Try and open the file for reading
-	if( !open($fh, '<', $config->{'cgi_config'}) ) {
-		$logger->error('Cannot open ' . $config->{'cgi_config'} . ' for reading: $!');
+	if( !open($fh, "<", $config->{"cgi_config"}) ) {
+		$logger->error("Cannot open " . $config->{"cgi_config"} . " for reading: $!");
 		exit(3);
 	}
 
 	# Write the header
-	$data .= '# Managed by rebuild_nagios.pl\n';
-	$data .= '# Rebuilt at: ' . pretty_time() . '\n\n';
+	$data .= "# Managed by rebuild_nagios.pl\n";
+	$data .= "# Rebuilt at: " . pretty_time() . "\n\n";
 
 	# Read the lines
 	my($key, $value);
@@ -811,7 +811,7 @@ sub update_admins {
 		my $line = $_;
 
 		# If this is not a key=value line then skip it
-		if( index($line, '=') eq -1 ) {
+		if( index($line, "=") eq -1 ) {
 			$data .= $line;
 		} else {
 			# Get key, value
@@ -819,16 +819,16 @@ sub update_admins {
 
 			# Check if we need to update the value
 			if(
-				$key eq 'authorized_for_system_information' ||
-				$key eq 'authorized_for_configuration_information' ||
-				$key eq 'authorized_for_all_service_commands'
+				$key eq "authorized_for_system_information" ||
+				$key eq "authorized_for_configuration_information" ||
+				$key eq "authorized_for_all_service_commands"
 			) {
 				# Set the value to the new admin list
-				$value .= join('@CLUENET.ORG,', $config->{'admins'});
+				$value .= join("@CLUENET.ORG,", $config->{"admins"});
 			}
 
 			# Add the key=value back to the data
-			$data .= $key . '=' . $value;
+			$data .= $key . "=" . $value;
 		}
 	}
 
@@ -836,8 +836,8 @@ sub update_admins {
 	close($fh);
 
 	# Try and open the FH for writing
-	if( !open($fh, '>', $config->{'cgi_config'}) ) {
-		$logger->error('Cannot open ' . $config->{'cgi_config'} . ' for writing: $!');
+	if( !open($fh, ">", $config->{"cgi_config"}) ) {
+		$logger->error("Cannot open " . $config->{"cgi_config"} . " for writing: $!");
 		exit(4);
 	}
 
@@ -873,32 +873,32 @@ sub write_configs {
 	};
 
 	# First we build the contacts file
-	my $contacts = '# Managed by rebuild_nagios.pl\n';
-	$contacts .= '# Rebuilt at: ' . pretty_time() . '\n';
+	my $contacts = "# Managed by rebuild_nagios.pl\n";
+	$contacts .= "# Rebuilt at: " . pretty_time() . "\n";
 
-	$logger->info('Starting build_contacts_config');
+	$logger->info("Starting build_contacts_config");
 	$contacts .= &build_contacts_config($users);
 
 	# Write the contacts file
-	if( !open($fh, '>', $config->{'config_dir'} . '/contacts.cfg') ) {
-		$logger->fatal('Cannot open ' . $config->{'config_dir'} . '/contacts.cfg for writing');
-		notify_irc('Cannot open ' . $config->{'config_dir'} . '/contacts.cfg for writing');
+	if( !open($fh, ">", $config->{"config_dir"} . "/contacts.cfg") ) {
+		$logger->fatal("Cannot open " . $config->{"config_dir"} . "/contacts.cfg for writing");
+		notify_irc("Cannot open " . $config->{"config_dir"} . "/contacts.cfg for writing");
 		return;
 	}
 	print $fh $contacts;
 	close($fh);
 
 	# Next we build the hostgroups file
-	my $hostgroups = '# Managed by rebuild_nagios.pl\n';
-	$hostgroups .= '# Rebuilt at: ' . pretty_time() . '\n';
+	my $hostgroups = "# Managed by rebuild_nagios.pl\n";
+	$hostgroups .= "# Rebuilt at: " . pretty_time() . "\n";
 
-	$logger->info('Starting build_hostgroups_config');
+	$logger->info("Starting build_hostgroups_config");
 	$hostgroups .= &build_hostgroups_config($servers);
 
 	# Write the hostgroups file
-	if( !open($fh, '>', $config->{'config_dir'} . '/hostgroups.cfg') ){
-		$logger->fatal('Cannot open ' . $config->{'config_dir'} . '/hostgroups.cfg for writing');
-		notify_irc('Cannot open ' . $config->{'config_dir'} . '/hostgroups.cfg for writing');
+	if( !open($fh, ">", $config->{"config_dir"} . "/hostgroups.cfg") ){
+		$logger->fatal("Cannot open " . $config->{"config_dir"} . "/hostgroups.cfg for writing");
+		notify_irc("Cannot open " . $config->{"config_dir"} . "/hostgroups.cfg for writing");
 		return;
 	}
 	print $fh $hostgroups;
@@ -906,38 +906,38 @@ sub write_configs {
 
 	# Now we build each servers file
 	for my $server ( keys( %$servers ) ) {
-		my $host = '# Managed by rebuild_nagios.pl\n';
-		$host .= '# Rebuilt at: ' . pretty_time() . '\n';
+		my $host = "# Managed by rebuild_nagios.pl\n";
+		$host .= "# Rebuilt at: " . pretty_time() . "\n";
 
 		# Host definition
-		$logger->info('Starting build_host_config for ' . $server);
-		$host .= &build_host_config($server, $servers->{$server}, $servers->{$server}->{'services'}->{'ping'});
+		$logger->info("Starting build_host_config for " . $server);
+		$host .= &build_host_config($server, $servers->{$server}, $servers->{$server}->{"services"}->{"ping"});
 
 		# Loop though the services adding them
-		for my $service ( keys( %{ $servers->{$server}->{'services'} } ) ) {
+		for my $service ( keys( %{ $servers->{$server}->{"services"} } ) ) {
 			# subroutine for this service
-			my $sub = 'build_service_' . $service . '_config';
+			my $sub = "build_service_" . $service . "_config";
 
 			# Service hash
-			my $sdata = $servers->{$server}->{'services'}->{$service};
+			my $sdata = $servers->{$server}->{"services"}->{$service};
 
 			# check if the service sub exists
 			if( !$dispatch->{$service} ) {
-				$logger->error('Could not add ' . $service . ' to ' . $server . ': missing sub ' . $sub);
-				notify_irc('Could not add ' . $service . ' to ' . $server . ': missing sub ' . $sub);
+				$logger->error("Could not add " . $service . " to " . $server . ": missing sub " . $sub);
+				notify_irc("Could not add " . $service . " to " . $server . ": missing sub " . $sub);
 			} else {
 				# Add the service comment
-				$host .= '\n\n# ' . $service . '\n';
+				$host .= "\n\n# " . $service . "\n";
 
 				# Call the service sub and adds it return data
-				$logger->info('Starting build_service_config for ' . $service . ' (' . $server . ')');
+				$logger->info("Starting build_service_config for " . $service . " (" . $server . ")");
 				$host .= $dispatch->{$service}->($server, $sdata);
 			}
 		}
 
-		if( !open($fh, '>', $config->{'config_dir'} . '/' . $server . '.cfg') ) {
-			$logger->fatal('Cannot open ' . $config->{'config_dir'} . '/' . $server . '.cfg for writing');
-			notify_irc('Cannot open ' . $config->{'config_dir'} . '/' . $server . '.cfg for writing');
+		if( !open($fh, ">", $config->{"config_dir"} . "/" . $server . ".cfg") ) {
+			$logger->fatal("Cannot open " . $config->{"config_dir"} . "/" . $server . ".cfg for writing");
+			notify_irc("Cannot open " . $config->{"config_dir"} . "/" . $server . ".cfg for writing");
 			return;
 		}
 		print $fh $host;
@@ -958,23 +958,23 @@ String containing the hostgroup definitions
 
 sub build_hostgroups_config {
 	my $servers = shift;
-	my $hostgroups_config = '';
+	my $hostgroups_config = "";
 
 	my $groups = ();
 	for my $server ( keys( %$servers ) ) {
 		$server = $servers->{$server};
 
-		if( !grep( /$server->{'owner'}/, @$groups ) ) {
-			push(@$groups, $server->{'owner'});
+		if( !grep( /$server->{"owner"}/, @$groups ) ) {
+			push(@$groups, $server->{"owner"});
 		}
 	}
 
 	for my $owner ( @$groups ) {
-		$hostgroups_config .= '\n\n# ' . $owner . '\n';
-		$hostgroups_config .= 'define hostgroup {\n';
-		$hostgroups_config .= '\thostgroup_name ' . $owner . '_servers\n';
-		$hostgroups_config .= '\talias ' . $owner . '\'s servers\n';
-		$hostgroups_config .= '}\n';
+		$hostgroups_config .= "\n\n# " . $owner . "\n";
+		$hostgroups_config .= "define hostgroup {\n";
+		$hostgroups_config .= "\thostgroup_name " . $owner . "_servers\n";
+		$hostgroups_config .= "\talias " . $owner . "\"s servers\n";
+		$hostgroups_config .= "}\n";
 	}
 
 	return $hostgroups_config;
@@ -993,61 +993,61 @@ String containing the contact definitions
 
 sub build_contacts_config {
 	my $users = shift;
-	my $contacts_config = '';
+	my $contacts_config = "";
 
 	# Magic contacts
-	$contacts_config .= '# __nagiosbot_twitter__\n';
-	$contacts_config .= 'define contact {\n';
-	$contacts_config .= '\tcontact_name __nagiosbot_twitter__\n';
-	$contacts_config .= '\talias Twitter relay bot\n';
-	$contacts_config .= '\thost_notification_period 24x7\n';
-	$contacts_config .= '\tservice_notification_period 24x7\n';
-	$contacts_config .= '\thost_notification_commands notify-host-by-twitter\n';
-	$contacts_config .= '\tservice_notification_commands notify-service-by-twitter\n';
-	$contacts_config .= '\tservice_notification_options w,u,c,r,f,s\n';
-	$contacts_config .= '\thost_notification_options d,u,r,f,s\n';
-	$contacts_config .= '}\n\n';
+	$contacts_config .= "# __nagiosbot_twitter__\n";
+	$contacts_config .= "define contact {\n";
+	$contacts_config .= "\tcontact_name __nagiosbot_twitter__\n";
+	$contacts_config .= "\talias Twitter relay bot\n";
+	$contacts_config .= "\thost_notification_period 24x7\n";
+	$contacts_config .= "\tservice_notification_period 24x7\n";
+	$contacts_config .= "\thost_notification_commands notify-host-by-twitter\n";
+	$contacts_config .= "\tservice_notification_commands notify-service-by-twitter\n";
+	$contacts_config .= "\tservice_notification_options w,u,c,r,f,s\n";
+	$contacts_config .= "\thost_notification_options d,u,r,f,s\n";
+	$contacts_config .= "}\n\n";
 
-	$contacts_config .= '# __nagiosbot_irc__\n';
-	$contacts_config .= 'define contact {\n';
-	$contacts_config .= '\tcontact_name __nagiosbot_irc__\n';
-	$contacts_config .= '\talias IRC relay bot\n';
-	$contacts_config .= '\thost_notification_period 24x7\n';
-	$contacts_config .= '\tservice_notification_period 24x7\n';
-	$contacts_config .= '\thost_notification_commands notify-host-by-irc\n';
-	$contacts_config .= '\tservice_notification_commands notify-service-by-irc\n';
-	$contacts_config .= '\tservice_notification_options w,u,c,r,f,s\n';
-	$contacts_config .= '\thost_notification_options d,u,r,f,s\n';
-	$contacts_config .= '}\n\n';
+	$contacts_config .= "# __nagiosbot_irc__\n";
+	$contacts_config .= "define contact {\n";
+	$contacts_config .= "\tcontact_name __nagiosbot_irc__\n";
+	$contacts_config .= "\talias IRC relay bot\n";
+	$contacts_config .= "\thost_notification_period 24x7\n";
+	$contacts_config .= "\tservice_notification_period 24x7\n";
+	$contacts_config .= "\thost_notification_commands notify-host-by-irc\n";
+	$contacts_config .= "\tservice_notification_commands notify-service-by-irc\n";
+	$contacts_config .= "\tservice_notification_options w,u,c,r,f,s\n";
+	$contacts_config .= "\thost_notification_options d,u,r,f,s\n";
+	$contacts_config .= "}\n\n";
 
 	# Actual contacts
 	for my $user ( keys(%$users) ) {
 		my $udata = $users->{$user};
 
-		$contacts_config .= '# ' . $user . '\n';
-		$contacts_config .= 'define contact {\n';
-		$contacts_config .= '\tcontact_name ' . $user . '\n';
-		$contacts_config .= '\talias ' . $udata->{'full_name'} . '\n';
-		$contacts_config .= '\thost_notification_period 24x7\n';
-		$contacts_config .= '\tservice_notification_period 24x7\n';
+		$contacts_config .= "# " . $user . "\n";
+		$contacts_config .= "define contact {\n";
+		$contacts_config .= "\tcontact_name " . $user . "\n";
+		$contacts_config .= "\talias " . $udata->{"full_name"} . "\n";
+		$contacts_config .= "\thost_notification_period 24x7\n";
+		$contacts_config .= "\tservice_notification_period 24x7\n";
 
-		if( $udata->{'email'} ) {
-			$contacts_config .= '\t#email ' . $udata->{'email'} . '\n';
+		if( $udata->{"email"} ) {
+			$contacts_config .= "\t#email " . $udata->{"email"} . "\n";
 		}
 
-		if( !$udata->{'alerts'} ) {
-			$contacts_config .= '\thost_notification_commands do-nothing-at-all\n';
-			$contacts_config .= '\tservice_notification_commands do-nothing-at-all\n';
+		if( !$udata->{"alerts"} ) {
+			$contacts_config .= "\thost_notification_commands do-nothing-at-all\n";
+			$contacts_config .= "\tservice_notification_commands do-nothing-at-all\n";
 		} else {
-			if( $udata->{'alerts'}->{'email'} && $udata->{'alerts'}->{'email'}->{'target'} ) {
-				$contacts_config .= '\thost_notification_commands notify-host-by-email\n';
-				$contacts_config .= '\tservice_notification_commands notify-service-by-email\n';
+			if( $udata->{"alerts"}->{"email"} && $udata->{"alerts"}->{"email"}->{"target"} ) {
+				$contacts_config .= "\thost_notification_commands notify-host-by-email\n";
+				$contacts_config .= "\tservice_notification_commands notify-service-by-email\n";
 			}
 		}
 
-		$contacts_config .= '\tservice_notification_options w,u,c,r,f,s\n';
-		$contacts_config .= '\thost_notification_options d,u,r,f,s\n';
-		$contacts_config .= '}\n\n';
+		$contacts_config .= "\tservice_notification_options w,u,c,r,f,s\n";
+		$contacts_config .= "\thost_notification_options d,u,r,f,s\n";
+		$contacts_config .= "}\n\n";
 	}
 
 	return $contacts_config;
@@ -1070,89 +1070,89 @@ sub build_host_config {
 	my $server = shift;
 	my $sdata = shift;
 	my $pdata = shift;
-	my $server_config = '';
+	my $server_config = "";
 
 	my $check_attempts = 5;
-	if( $sdata->{'check_attempts'} && $sdata->{'check_attempts'} =~ /^\d+$/ ) {
-		$check_attempts = $sdata->{'check_attempts'};
+	if( $sdata->{"check_attempts"} && $sdata->{"check_attempts"} =~ /^\d+$/ ) {
+		$check_attempts = $sdata->{"check_attempts"};
 	}
 
 	my $notification_interval = 0;
-	if( $sdata->{'notification_interval'} && $sdata->{'notification_interval'} =~ /^\d+$/ ) {
-		$notification_interval = $sdata->{'notification_interval'};
+	if( $sdata->{"notification_interval"} && $sdata->{"notification_interval"} =~ /^\d+$/ ) {
+		$notification_interval = $sdata->{"notification_interval"};
 	}
 
-	$server_config .= 'define host{\n';
-	$server_config .= '\thost_name ' . $server . '\n';
-	$server_config .= '\talias ' . $sdata->{'name'} . '\n';
-	$server_config .= '\taddress ' . $sdata->{'address'} . '\n';
-	$server_config .= '\thostgroups ' . $sdata->{'owner'} . '_servers\n';
+	$server_config .= "define host{\n";
+	$server_config .= "\thost_name " . $server . "\n";
+	$server_config .= "\talias " . $sdata->{"name"} . "\n";
+	$server_config .= "\taddress " . $sdata->{"address"} . "\n";
+	$server_config .= "\thostgroups " . $sdata->{"owner"} . "_servers\n";
 
-	$server_config .= '\tmax_check_attempts ' . $check_attempts . '\n';
-	$server_config .= '\tnotification_interval ' . $notification_interval . '\n';
-	$server_config .= '\tcheck_period 24x7\n';
-	$server_config .= '\tnotification_period 24x7\n';
+	$server_config .= "\tmax_check_attempts " . $check_attempts . "\n";
+	$server_config .= "\tnotification_interval " . $notification_interval . "\n";
+	$server_config .= "\tcheck_period 24x7\n";
+	$server_config .= "\tnotification_period 24x7\n";
 
 	if( $pdata ) {
-		my $warning_rta = '2000.00';
-		if( $pdata->{'warning_rta'} && $pdata->{'warning_rta'} =~ /^\d+$/ ) {
-			$warning_rta = $pdata->{'warning_rta'};
+		my $warning_rta = "2000.00";
+		if( $pdata->{"warning_rta"} && $pdata->{"warning_rta"} =~ /^\d+$/ ) {
+			$warning_rta = $pdata->{"warning_rta"};
 		}
 
-		my $warning_pl = '80';
-		if( $pdata->{'warning_pl'} && $pdata->{'warning_pl'} =~ /^\d+$/ ) {
-			$warning_pl = $pdata->{'warning_pl'};
+		my $warning_pl = "80";
+		if( $pdata->{"warning_pl"} && $pdata->{"warning_pl"} =~ /^\d+$/ ) {
+			$warning_pl = $pdata->{"warning_pl"};
 		}
 
-		my $critical_rta = '7000.00';
-		if( $pdata->{'critical_rta'} && $pdata->{'critical_rta'} =~ /^\d+$/ ) {
-			$critical_rta = $pdata->{'critical_rta'};
+		my $critical_rta = "7000.00";
+		if( $pdata->{"critical_rta"} && $pdata->{"critical_rta"} =~ /^\d+$/ ) {
+			$critical_rta = $pdata->{"critical_rta"};
 		}
 
-		my $critical_pl = '100';
-		if( $pdata->{'critical_pl'} && $pdata->{'critical_pl'} =~ /^\d+$/ ) {
-			$critical_pl = $pdata->{'critical_pl'};
+		my $critical_pl = "100";
+		if( $pdata->{"critical_pl"} && $pdata->{"critical_pl"} =~ /^\d+$/ ) {
+			$critical_pl = $pdata->{"critical_pl"};
 		}
 
-		my $packets = '5';
-		if( $pdata->{'packets'} && $pdata->{'packets'} =~ /^\d+$/ ) {
-			$packets = $pdata->{'packets'};
+		my $packets = "5";
+		if( $pdata->{"packets"} && $pdata->{"packets"} =~ /^\d+$/ ) {
+			$packets = $pdata->{"packets"};
 		}
 
-		$server_config .= '\tcheck_command check_host_alive!';
-		$server_config .= $warning_rta . '!' . $warning_pl . '!';
-		$server_config .= $critical_rta . '!' . $critical_pl . '!';
-		$server_config .= $packets . '\n';
+		$server_config .= "\tcheck_command check_host_alive!";
+		$server_config .= $warning_rta . "!" . $warning_pl . "!";
+		$server_config .= $critical_rta . "!" . $critical_pl . "!";
+		$server_config .= $packets . "\n";
 	}
 
-	$server_config .= '\tcontacts ';
+	$server_config .= "\tcontacts ";
 
 	# Owner dummy
-	$server_config .= $sdata->{'owner'} . '@CLUENET.ORG, ';
+	$server_config .= $sdata->{"owner"} . "@CLUENET.ORG, ";
 
 	# Admin dummys
-	for my $admin ( @{ $sdata->{'admins'} } ) {
-		$server_config .= $admin . '@CLUENET.ORG, ';
+	for my $admin ( @{ $sdata->{"admins"} } ) {
+		$server_config .= $admin . "@CLUENET.ORG, ";
 	}
-	$server_config .= '\n';
+	$server_config .= "\n";
 
-	$server_config .= '\tcontact_groups ' . $sdata->{'name'} . '_admins\n';
-	$server_config .= '}\n\n';
+	$server_config .= "\tcontact_groups " . $sdata->{"name"} . "_admins\n";
+	$server_config .= "}\n\n";
 
-	$server_config .= '# Contact group\n';
-	$server_config .= 'define contactgroup {\n';
-	$server_config .= '\tcontactgroup_name ' . $sdata->{'name'} . '_admins\n';
-	$server_config .= '\talias ' . $sdata->{'name'} . '\'s admins\n';
-	$server_config .= '\tmembers __nagiosbot_twitter__, __nagiosbot_irc__, ';
+	$server_config .= "# Contact group\n";
+	$server_config .= "define contactgroup {\n";
+	$server_config .= "\tcontactgroup_name " . $sdata->{"name"} . "_admins\n";
+	$server_config .= "\talias " . $sdata->{"name"} . "\"s admins\n";
+	$server_config .= "\tmembers __nagiosbot_twitter__, __nagiosbot_irc__, ";
 
 	# Owner contact
-	$server_config .= $sdata->{'owner'} . '-' . $sdata->{'name'} . ', ';
+	$server_config .= $sdata->{"owner"} . "-" . $sdata->{"name"} . ", ";
 
 	# Admin contacts
-	for my $admin ( @{ $sdata->{'admins'} } ) {
-		$server_config .= $admin . '-' . $sdata->{'name'} . ', ';
+	for my $admin ( @{ $sdata->{"admins"} } ) {
+		$server_config .= $admin . "-" . $sdata->{"name"} . ", ";
 	}
-	$server_config .= '\n}\n';
+	$server_config .= "\n}\n";
 
 	return $server_config;
 }
@@ -1172,24 +1172,24 @@ sub parse_service_check_options {
 	my $sdata = shift;
 	my $sgdata = {};
 
-	$sgdata->{'check_attempts'} = '3';
-	if( $sdata->{'check_attempts'} && $sdata->{'check_attempts'} =~ /^\d+$/ ) {
-		$sgdata->{'check_attempts'} = $sdata->{'check_attempts'};
+	$sgdata->{"check_attempts"} = "3";
+	if( $sdata->{"check_attempts"} && $sdata->{"check_attempts"} =~ /^\d+$/ ) {
+		$sgdata->{"check_attempts"} = $sdata->{"check_attempts"};
 	}
 
-	$sgdata->{'check_interval'} = '5';
-	if( $sdata->{'check_interval'} && $sdata->{'check_interval'} =~ /^\d+$/ ) {
-		$sgdata->{'check_interval'} = $sdata->{'check_interval'};
+	$sgdata->{"check_interval"} = "5";
+	if( $sdata->{"check_interval"} && $sdata->{"check_interval"} =~ /^\d+$/ ) {
+		$sgdata->{"check_interval"} = $sdata->{"check_interval"};
 	}
 
-	$sgdata->{'retry_interval'} = '3';
-	if( $sdata->{'retry_interval'} && $sdata->{'retry_interval'} =~ /^\d+$/ ) {
-		$sgdata->{'retry_interval'} = $sdata->{'retry_interval'};
+	$sgdata->{"retry_interval"} = "3";
+	if( $sdata->{"retry_interval"} && $sdata->{"retry_interval"} =~ /^\d+$/ ) {
+		$sgdata->{"retry_interval"} = $sdata->{"retry_interval"};
 	}
 
-	$sgdata->{'notification_interval'} = '0';
-	if( $sdata->{'notification_interval'} && $sdata->{'notification_interval'} =~ /^\d+$/ ) {
-		$sgdata->{'notification_interval'} = $sdata->{'notification_interval'};
+	$sgdata->{"notification_interval"} = "0";
+	if( $sdata->{"notification_interval"} && $sdata->{"notification_interval"} =~ /^\d+$/ ) {
+		$sgdata->{"notification_interval"} = $sdata->{"notification_interval"};
 	}
 
 	return $sgdata;
@@ -1216,30 +1216,30 @@ sub build_service_definition {
 	my @check_args= shift;
 
 	my $sgdata = parse_service_check_options($sdata);
-	my $service_config = '';
+	my $service_config = "";
 
 	# Service
-	$service_config = 'define service {\n';
-	$service_config .= '\thost_name ' . $hostname . '\n';
-	$service_config .= '\tservice_description ' . $sdata->{'description'} . '\n';
-	$service_config .= '\tnotification_period 24x7\n';
-	$service_config .= '\tcheck_period 24x7\n';
-	$service_config .= '\tmax_check_attempts ' . $sgdata->{'check_attempts'} . '\n';
-	$service_config .= '\tcheck_interval ' . $sgdata->{'check_interval'} . '\n';
-	$service_config .= '\tretry_interval ' . $sgdata->{'retry_interval'} . '\n';
-	$service_config .= '\tnotification_interval ' . $sgdata->{'notification_interval'} . '\n';
-	$service_config .= '\tnotification_options w,u,c,r,f,s\n';
-	$service_config .= '\tcheck_command ' . $check_command . '!';
-	$service_config .= join('!', @check_args) . '\n';
-	$service_config .= '}\n\n';
+	$service_config = "define service {\n";
+	$service_config .= "\thost_name " . $hostname . "\n";
+	$service_config .= "\tservice_description " . $sdata->{"description"} . "\n";
+	$service_config .= "\tnotification_period 24x7\n";
+	$service_config .= "\tcheck_period 24x7\n";
+	$service_config .= "\tmax_check_attempts " . $sgdata->{"check_attempts"} . "\n";
+	$service_config .= "\tcheck_interval " . $sgdata->{"check_interval"} . "\n";
+	$service_config .= "\tretry_interval " . $sgdata->{"retry_interval"} . "\n";
+	$service_config .= "\tnotification_interval " . $sgdata->{"notification_interval"} . "\n";
+	$service_config .= "\tnotification_options w,u,c,r,f,s\n";
+	$service_config .= "\tcheck_command " . $check_command . "!";
+	$service_config .= join("!", @check_args) . "\n";
+	$service_config .= "}\n\n";
 
 	# Service extra info
-	$service_config = 'define serviceextinfo {\n';
-	$service_config .= '\thost_name ' . $hostname . '\n';
-	$service_config .= '\tservice_description ' . $sdata->{'description'} . '\n';
-	$service_config .= '\tnotes_url /nagios/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$';
-	$service_config .= 'onMouseOver="showGraphPopup(this)" onMouseOut="hideGraphPopup()"\n';
-	$service_config .= '}\n';
+	$service_config = "define serviceextinfo {\n";
+	$service_config .= "\thost_name " . $hostname . "\n";
+	$service_config .= "\tservice_description " . $sdata->{"description"} . "\n";
+	$service_config .= "\tnotes_url /nagios/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$";
+	$service_config .= "onMouseOver='showGraphPopup(this)' onMouseOut='hideGraphPopup()'\n";
+	$service_config .= "}\n";
 
 	return $service_config;
 }
@@ -1256,35 +1256,35 @@ Returns nothing.
 =cut
 
 sub reload_nagios {
-	my $status = qx(/usr/local/nagios/bin/nagios --verify-config '/usr/local/nagios/etc/nagios.cfg' 2>&1);
+	my $status = qx(/usr/local/nagios/bin/nagios --verify-config "/usr/local/nagios/etc/nagios.cfg" 2>&1);
 
-	if( '$?' eq 0 ) {
-		$logger->info('Nagios config looks valid');
+	if( "$?" eq 0 ) {
+		$logger->info("Nagios config looks valid");
 
 		# Check if we are running
 		$status = qx(/etc/init.d/nagios status 2>&1);
-		if( '$?' eq 0 ) {
+		if( "$?" eq 0 ) {
 			# Try and do a reload
 			$status = qx(/etc/init.d/nagios reload 2>&1);
-			if( '$?' eq 0 ) {
-				$logger->info('Nagios reloaded');
+			if( "$?" eq 0 ) {
+				$logger->info("Nagios reloaded");
 			} else {
-				$logger->fatal('Could not reload nagios:\n' . $status);
-				notify_irc('Could not reload nagios');
+				$logger->fatal("Could not reload nagios:\n" . $status);
+				notify_irc("Could not reload nagios");
 			}
 		} else {
 			# Try and do a restart
 			$status = qx(/etc/init.d/nagios restart 2>&1);
-			if( '$?' eq 0 ) {
-				$logger->info('Nagios restarted');
+			if( "$?" eq 0 ) {
+				$logger->info("Nagios restarted");
 			} else {
-				$logger->fatal('Could not restart nagios:\n' . $status);
-				notify_irc('Could not restart nagios');
+				$logger->fatal("Could not restart nagios:\n" . $status);
+				notify_irc("Could not restart nagios");
 			}
 		}
 	} else {
-		$logger->fatal('Nagios config looks broke:\n' . $status);
-		notify_irc('Nagios config looks broke');
+		$logger->fatal("Nagios config looks broke:\n" . $status);
+		notify_irc("Nagios config looks broke");
 	}
 }
 
@@ -1305,22 +1305,22 @@ sub build_service_ssh_config {
 	my $server = shift;
 	my $sdata = shift;
 
-	if( ! $sdata->{'description'} || $sdata->{'description'} !~ /^[a-zA-Z0-9_\- ]$/ ) {
-		$sdata->{'description'} = 'SSH check';
+	if( ! $sdata->{"description"} || $sdata->{"description"} !~ /^[a-zA-Z0-9_\- ]$/ ) {
+		$sdata->{"description"} = "SSH check";
 	}
 
-	my $timeout = '5';
-	if( $sdata->{'timeout'} && $sdata->{'timeout'} =~ /^\d+$/ ) {
-		$timeout = $sdata->{'timeout'};
+	my $timeout = "5";
+	if( $sdata->{"timeout"} && $sdata->{"timeout"} =~ /^\d+$/ ) {
+		$timeout = $sdata->{"timeout"};
 	}
 
-	my $version = '';
-	if( $sdata->{'version'} ) {
-		$version = ' -r "' . $sdata->{'version'} . '"';
+	my $version = "";
+	if( $sdata->{"version"} ) {
+		$version = " -r '" . $sdata->{"version"} . "'";
 	}
 
-	my $args = [ $timeout, $sdata->{'port'}, $version ];
-	return &build_service_definition($server, $sdata, 'check_ssh', $args);
+	my $args = [ $timeout, $sdata->{"port"}, $version ];
+	return &build_service_definition($server, $sdata, "check_ssh", $args);
 }
 
 =head2 ping
@@ -1339,37 +1339,37 @@ sub build_service_ping_config {
 	my $server = shift;
 	my $sdata = shift;
 
-	if( ! $sdata->{'description'} || $sdata->{'description'} !~ /^[a-zA-Z0-9_\- ]$/ ) {
-		$sdata->{'description'} = 'PING check';
+	if( ! $sdata->{"description"} || $sdata->{"description"} !~ /^[a-zA-Z0-9_\- ]$/ ) {
+		$sdata->{"description"} = "PING check";
 	}
 
-	my $warning_rta = '2000.00';
-	if( $sdata->{'warning_rta'} && $sdata->{'warning_rta'} =~ /^\d+$/ ) {
-		$warning_rta = $sdata->{'warning_rta'};
+	my $warning_rta = "2000.00";
+	if( $sdata->{"warning_rta"} && $sdata->{"warning_rta"} =~ /^\d+$/ ) {
+		$warning_rta = $sdata->{"warning_rta"};
 	}
 
-	my $warning_pl = '80';
-	if( $sdata->{'warning_pl'} && $sdata->{'warning_pl'} =~ /^\d+$/ ) {
-		$warning_pl = $sdata->{'warning_pl'};
+	my $warning_pl = "80";
+	if( $sdata->{"warning_pl"} && $sdata->{"warning_pl"} =~ /^\d+$/ ) {
+		$warning_pl = $sdata->{"warning_pl"};
 	}
 
-	my $critical_rta = '7000.00';
-	if( $sdata->{'critical_rta'} && $sdata->{'critical_rta'} =~ /^\d+$/ ) {
-		$critical_rta = $sdata->{'critical_rta'};
+	my $critical_rta = "7000.00";
+	if( $sdata->{"critical_rta"} && $sdata->{"critical_rta"} =~ /^\d+$/ ) {
+		$critical_rta = $sdata->{"critical_rta"};
 	}
 
-	my $critical_pl = '100';
-	if( $sdata->{'critical_pl'} && $sdata->{'critical_pl'} =~ /^\d+$/ ) {
-		$critical_pl = $sdata->{'critical_pl'};
+	my $critical_pl = "100";
+	if( $sdata->{"critical_pl"} && $sdata->{"critical_pl"} =~ /^\d+$/ ) {
+		$critical_pl = $sdata->{"critical_pl"};
 	}
 
-	my $packets = '5';
-	if( $sdata->{'packets'} && $sdata->{'packets'} =~ /^\d+$/ ) {
-		$packets = $sdata->{'packets'};
+	my $packets = "5";
+	if( $sdata->{"packets"} && $sdata->{"packets"} =~ /^\d+$/ ) {
+		$packets = $sdata->{"packets"};
 	}
 
 	my $args = [ $warning_rta, $warning_pl, $critical_rta, $critical_pl, $packets ];
-	return &build_service_definition($server, $sdata, 'check_ping', $args);
+	return &build_service_definition($server, $sdata, "check_ping", $args);
 }
 
 =head2 rdp
@@ -1388,27 +1388,27 @@ sub build_service_rdp_config {
 	my $server = shift;
 	my $sdata = shift;
 
-	if( !$sdata->{'description'} || $sdata->{'description'} !~ /^[a-zA-Z0-9_\- ]$/ ) {
-		$sdata->{'description'} = 'RDP check';
+	if( !$sdata->{"description"} || $sdata->{"description"} !~ /^[a-zA-Z0-9_\- ]$/ ) {
+		$sdata->{"description"} = "RDP check";
 	}
 
-	my $warning_timeout = '5';
-	if( $sdata->{'warning_timeout'} && $sdata->{'warning_timeout'} =~ /^\d+$/ ) {
-		$warning_timeout = $sdata->{'warning_timeout'};
+	my $warning_timeout = "5";
+	if( $sdata->{"warning_timeout"} && $sdata->{"warning_timeout"} =~ /^\d+$/ ) {
+		$warning_timeout = $sdata->{"warning_timeout"};
 	}
 
-	my $critical_timeout = '10';
-	if( $sdata->{'critical_timeout'} && $sdata->{'critical_timeout'} =~ /^\d+$/ ) {
-		$critical_timeout = $sdata->{'critical_timeout'};
+	my $critical_timeout = "10";
+	if( $sdata->{"critical_timeout"} && $sdata->{"critical_timeout"} =~ /^\d+$/ ) {
+		$critical_timeout = $sdata->{"critical_timeout"};
 	}
 
 	my $args = [ $warning_timeout, $critical_timeout ];
-	return &build_service_definition($server, $sdata, 'check_x224', $args);
+	return &build_service_definition($server, $sdata, "check_x224", $args);
 }
 
 # Run the main sub - this does all the magic
 if( $< == 0 ) {
-	print 'Please DO NOT run this as root\n';
+	print "Please DO NOT run this as root\n";
 	exit(100);
 }
 run();
