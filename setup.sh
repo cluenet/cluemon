@@ -55,23 +55,25 @@ then
 fi
 
 echo "Extracting source code";
+mkdir "nagios-3.3.1"
 tar -xvf nagios-3.3.1.tar.gz -C nagios-3.3.1;
-tar -xvf nagios-plugins-1.4.15.tar.gz -C nagios-plugins-1.4.15;
-tar -xvf nagiosgraph-1.4.4.tar.gz -C nagiosgraph-1.4.4;
-
-if [ ! -d "nagios-3.3.1" ];
+if [ "$?" != "0" ];
 then
 	echo "Failed to extract nagios core";
 	exit 2;
 fi
 
-if [ ! -d "nagios-plugins-1.4.15" ];
+mkdir "nagios-plugins-1.4.15"
+tar -xvf nagios-plugins-1.4.15.tar.gz -C nagios-plugins-1.4.15;
+if [ "$?" != "0" ];
 then
 	echo "Failed to extract nagios plugins";
 	exit 2;
 fi
 
-if [ ! -d "nagiosgraph-1.4.4" ];
+mkdir "nagiosgraph-1.4.4"
+tar -xvf nagiosgraph-1.4.4.tar.gz -C nagiosgraph-1.4.4;
+if [ "$?" != "0" ];
 then
 	echo "Failed to extract nagios graph";
 	exit 2;
