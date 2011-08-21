@@ -57,7 +57,7 @@ fi
 echo "Extracting source code";
 mkdir "nagios-3.3.1"
 tar -xvf nagios-3.3.1.tar.gz -C nagios-3.3.1;
-if [ "$?" != "0" ];
+if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios core";
 	exit 2;
@@ -65,7 +65,7 @@ fi
 
 mkdir "nagios-plugins-1.4.15"
 tar -xvf nagios-plugins-1.4.15.tar.gz -C nagios-plugins-1.4.15;
-if [ "$?" != "0" ];
+if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios plugins";
 	exit 2;
@@ -73,21 +73,21 @@ fi
 
 mkdir "nagiosgraph-1.4.4"
 tar -xvf nagiosgraph-1.4.4.tar.gz -C nagiosgraph-1.4.4;
-if [ "$?" != "0" ];
+if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios graph";
 	exit 2;
 fi
 
 echo "Installing requirements";
-apt-get install -y make gcc g++ libgd2-xpm libgd2-xpm-dev libgd2 libgd2-dev \
+apt-get install -y make gcc g++ libgd2-xpm libgd2-xpm-dev libgd2-xpm \
 	libpng12-dev libjpeg62-dev libgd-tools libpng3-dev rrdtool perl \
 	perl-base perl-modules libcalendar-simple-perl libgd-gd2-perl perlmagick \
 	librrds-perl liburi-perl;
 
 echo "Creating user/group";
 id nagios > /dev/null 2>&1;
-if [ "$?" -ne "0" ];
+if [ "$?" -eq "0" ];
 then
 	echo "Nagios user already exists, ABORTING!";
 	exit 3;
