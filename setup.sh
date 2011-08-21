@@ -143,7 +143,8 @@ else
 fi
 
 echo 'Installing configs';
-rm -rvf /usr/local/nagios/etc/*;
+test -d '/usr/local/nagios/etc/' || mkdir -p '/usr/local/nagios/etc/'
+rm -rvf '/usr/local/nagios/etc/*';
 cp -vr nagios-etc/* /usr/local/nagios/etc/;
 
 echo 'Installing scripts';
@@ -249,4 +250,4 @@ EOF
 supervisorctl reread
 
 echo 'Running rebuild';
-/usr/local/bin/rebuild_nagios.pl;
+/usr/local/nagios/bin/rebuild_nagios.pl;
