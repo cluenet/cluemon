@@ -1213,7 +1213,7 @@ sub build_service_definition {
 	my $hostname = shift;
 	my $sdata = shift;
 	my $check_command = shift;
-	my @check_args= shift;
+	my $check_args= shift;
 
 	my $sgdata = parse_service_check_options($sdata);
 	my $service_config = "";
@@ -1230,7 +1230,7 @@ sub build_service_definition {
 	$service_config .= "\tnotification_interval " . $sgdata->{"notification_interval"} . "\n";
 	$service_config .= "\tnotification_options w,u,c,r,f,s\n";
 	$service_config .= "\tcheck_command " . $check_command . "!";
-	$service_config .= join("!", @check_args) . "\n";
+	$service_config .= join("!", @{$check_args}) . "\n";
 	$service_config .= "}\n\n";
 
 	# Service extra info
