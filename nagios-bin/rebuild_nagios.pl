@@ -1119,7 +1119,7 @@ sub build_host_config {
 			$packets = $pdata->{"packets"};
 		}
 
-		$server_config .= "\tcheck_command check_host_alive!";
+		$server_config .= "\tcheck_command check-host-alive!";
 		$server_config .= $warning_rta . "!" . $warning_pl . "!";
 		$server_config .= $critical_rta . "!" . $critical_pl . "!";
 		$server_config .= $packets . "\n";
