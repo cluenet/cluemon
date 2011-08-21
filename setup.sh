@@ -160,6 +160,9 @@ chown nagios:nagios nagios-libexec/*
 chmod 750 nagios-libexec/*
 cp -av nagios-libexec/* /usr/local/nagios/libexec/
 
+echo 'Fixing ownership'
+chown -R nagios:nagios /usr/local/nagios/
+
 echo 'Installing crontab';
 echo '0 * * * * /usr/local/bin/rebuild_nagios.pl' | \
 	crontab -u nagios -;
@@ -248,6 +251,3 @@ cat > /etc/apache2/sites-enabled/nagios <<'EOF'
 EOF
 /etc/init.d/apache2 restart
 supervisorctl reread
-
-echo 'Running rebuild';
-/usr/local/nagios/bin/rebuild_nagios.pl;
