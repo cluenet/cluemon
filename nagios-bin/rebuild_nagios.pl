@@ -261,7 +261,7 @@ sub notify_irc {
 		$logger->error('Could not send message to IRC relay: $!');
 		return;
 	} else {
-		$logger->info(''$message' sent to IRC relay');
+		$logger->info('"' . $message . '" sent to IRC relay');
 		return;
 	}
 }
@@ -387,7 +387,7 @@ sub get_servers {
 		my $cn = $server->get_value('cn');
 		if( !$cn ) {
 			# Error and skip if no cn
-			$logger->info('Skipping '' . $server->{'asn'}->{'objectName'} . '', no CN found');
+			$logger->info('Skipping "' . $server->{'asn'}->{'objectName'} . '", no CN found');
 			next;
 		}
 
@@ -403,7 +403,7 @@ sub get_servers {
 				$ip_address = $server->get_value('ipv6Address');
 				if( !$ip_address ) {
 					# No ip address found, skip
-					$logger->info('Skipping '' . $server->{'asn'}->{'objectName'} . '', no IP address found');
+					$logger->info('Skipping "' . $server->{'asn'}->{'objectName'} . '", no IP address found');
 					next;
 				}
 			}
@@ -416,7 +416,7 @@ sub get_servers {
 		$owner =~ s/uid=(.*),ou=people,dc=cluenet,dc=org/$1/;
 		if( !$owner ) {
 			# Error and skip if no owner
-			$logger->info('Skipping '' . $server->{'asn'}->{'objectName'} . '', no owner found');
+			$logger->info('Skipping "' . $server->{'asn'}->{'objectName'} . '", no owner found');
 			next;
 		}
 
@@ -973,7 +973,7 @@ sub build_hostgroups_config {
 		$hostgroups_config .= '\n\n# ' . $owner . '\n';
 		$hostgroups_config .= 'define hostgroup {\n';
 		$hostgroups_config .= '\thostgroup_name ' . $owner . '_servers\n';
-		$hostgroups_config .= '\talias ' . $owner . ''s servers\n';
+		$hostgroups_config .= '\talias ' . $owner . '\'s servers\n';
 		$hostgroups_config .= '}\n';
 	}
 
