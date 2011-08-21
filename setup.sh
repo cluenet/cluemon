@@ -166,7 +166,7 @@ mkdir -p /usr/local/nagios/etc/cluenet/
 chown -R nagios:nagios /usr/local/nagios/
 
 echo 'Installing crontab';
-echo '0 * * * * /usr/local/bin/rebuild_nagios.pl' | \
+echo '0 * * * * /usr/local/nagios/bin/rebuild_nagios.pl' | \
 	crontab -u nagios -;
 
 echo 'Adding nagiosbot to supervisord';
