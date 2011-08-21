@@ -121,6 +121,8 @@ cd ..;
 echo 'Compiling nagios graph';
 cd '/usr/local/src/nagiosgraph';
 sed -i 's|/opt/nagiosgraph/etc|/usr/local/nagios/etc/nagiosgraph/|g' cgi/*.cgi lib/insert.pl;
+
+cp etc/ngshared.pm /usr/local/nagios/nagiosgraph
 cp lib/insert.pl /usr/local/nagios/libexec
 cp cgi/*.cgi /usr/local/nagios/sbin
 
