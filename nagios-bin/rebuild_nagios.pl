@@ -1142,7 +1142,7 @@ sub build_host_config {
 	$server_config .= '# Contact group\n';
 	$server_config .= 'define contactgroup {\n';
 	$server_config .= '\tcontactgroup_name ' . $sdata->{'name'} . '_admins\n';
-	$server_config .= '\talias ' . $sdata->{'name'} . ''s admins\n';
+	$server_config .= '\talias ' . $sdata->{'name'} . '\'s admins\n';
 	$server_config .= '\tmembers __nagiosbot_twitter__, __nagiosbot_irc__, ';
 
 	# Owner contact
@@ -1237,8 +1237,8 @@ sub build_service_definition {
 	$service_config = 'define serviceextinfo {\n';
 	$service_config .= '\thost_name ' . $hostname . '\n';
 	$service_config .= '\tservice_description ' . $sdata->{'description'} . '\n';
-	$service_config .= '\tnotes_url ' . '/nagios/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$';
-	$service_config .= 'onMouseOver='showGraphPopup(this)' onMouseOut='hideGraphPopup()'\n';
+	$service_config .= '\tnotes_url /nagios/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$';
+	$service_config .= 'onMouseOver="showGraphPopup(this)" onMouseOut="hideGraphPopup()"\n';
 	$service_config .= '}\n';
 
 	return $service_config;
@@ -1316,7 +1316,7 @@ sub build_service_ssh_config {
 
 	my $version = '';
 	if( $sdata->{'version'} ) {
-		$version = ' -r '' . $sdata->{'version'} . ''';
+		$version = ' -r "' . $sdata->{'version'} . '"';
 	}
 
 	my $args = [ $timeout, $sdata->{'port'}, $version ];
