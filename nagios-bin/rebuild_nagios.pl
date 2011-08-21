@@ -285,7 +285,7 @@ sub get_users {
 		my $server = $servers->{$hostname};
 
 		if( !defined( $users_config->{$server->{"owner"}} ) ) {
-			$users_config->{$server->{"owner"} . "@CLUENET.ORG"} = {
+			$users_config->{$server->{"owner"} . "\@CLUENET.ORG"} = {
 				username => $server->{"owner"},
 				dummy => 1,
 			};
@@ -299,7 +299,7 @@ sub get_users {
 		if( $server->{"admins"} ) {
 			for my $username ( @{ $server->{"admins"} } ) {
 				if( !defined( $users_config->{$hostname} ) ) {
-					$users_config->{$username . "@CLUENET.ORG"} = {
+					$users_config->{$username . "\@CLUENET.ORG"} = {
 						username => $username,
 						dummy => 1,
 					};
@@ -824,7 +824,7 @@ sub update_admins {
 				$key eq "authorized_for_all_service_commands"
 			) {
 				# Set the value to the new admin list
-				$value .= join("@CLUENET.ORG,", $config->{"admins"});
+				$value .= join("\@CLUENET.ORG,", $config->{"admins"});
 			}
 
 			# Add the key=value back to the data
@@ -1128,11 +1128,11 @@ sub build_host_config {
 	$server_config .= "\tcontacts ";
 
 	# Owner dummy
-	$server_config .= $sdata->{"owner"} . "@CLUENET.ORG, ";
+	$server_config .= $sdata->{"owner"} . "\@CLUENET.ORG, ";
 
 	# Admin dummys
 	for my $admin ( @{ $sdata->{"admins"} } ) {
-		$server_config .= $admin . "@CLUENET.ORG, ";
+		$server_config .= $admin . "\@CLUENET.ORG, ";
 	}
 	$server_config .= "\n";
 
