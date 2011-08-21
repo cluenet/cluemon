@@ -870,7 +870,7 @@ sub write_configs {
 		ping => \&build_service_ping_config,
 		ssh => \&build_service_ssh_config,
 		rdp => \&build_service_rdp_config,
-		http -> \&build_service_http_config,
+		http => \&build_service_http_config,
 	};
 
 	# First we build the contacts file
