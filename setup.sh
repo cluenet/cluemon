@@ -99,7 +99,7 @@ adduser --system --home=/usr/local/nagios --shell=/bin/false \
 echo 'Compiling nagios core';
 cd '/usr/local/src/nagios';
 ./configure --prefix=/usr/local/nagios --enable-event-broker \
-	--enable-statuswrl --enable-statusmap --with-nagios-user=nagios \
+	--enable-statusmap --with-nagios-user=nagios \
 	--with-nagios-group=nagios --with-command-user=nagios \
 	--with-command-group=nagios;
 make all;
@@ -160,7 +160,9 @@ chown nagios:nagios nagios-libexec/*
 chmod 750 nagios-libexec/*
 cp -av nagios-libexec/* /usr/local/nagios/libexec/
 
-echo 'Fixing ownership'
+echo 'Fixing ownership/dirs'
+mkdir -p /usr/local/nagios/var/spool/checkresults/
+mkdir -p /usr/local/nagios/etc/cluenet/
 chown -R nagios:nagios /usr/local/nagios/
 
 echo 'Installing crontab';
