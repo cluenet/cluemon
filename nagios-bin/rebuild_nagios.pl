@@ -384,7 +384,7 @@ sub get_servers {
 	for my $server ( $response->entries ) {
 
 		# Check the entry has a CN (sanity check)
-		my $cn = $server->get_value("cn");
+		my $cn = lc($server->get_value("cn"));
 		if( !$cn ) {
 			# Error and skip if no cn
 			$logger->info("Skipping '" . $server->{"asn"}->{"objectName"} . "', no CN found");
@@ -973,7 +973,7 @@ sub build_hostgroups_config {
 		$hostgroups_config .= "\n\n# " . $owner . "\n";
 		$hostgroups_config .= "define hostgroup {\n";
 		$hostgroups_config .= "\thostgroup_name " . $owner . "_servers\n";
-		$hostgroups_config .= "\talias " . $owner . "\"s servers\n";
+		$hostgroups_config .= "\talias " . $owner . "'s servers\n";
 		$hostgroups_config .= "}\n";
 	}
 
@@ -1142,7 +1142,7 @@ sub build_host_config {
 	$server_config .= "# Contact group\n";
 	$server_config .= "define contactgroup {\n";
 	$server_config .= "\tcontactgroup_name " . $sdata->{"name"} . "_admins\n";
-	$server_config .= "\talias " . $sdata->{"name"} . "\"s admins\n";
+	$server_config .= "\talias " . $sdata->{"name"} . "'s admins\n";
 	$server_config .= "\tmembers __nagiosbot_twitter__, __nagiosbot_irc__, ";
 
 	# Owner contact
