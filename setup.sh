@@ -34,7 +34,7 @@ wget "http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/na
 
 wget "http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fnagiosplug%2Ffiles%2F&ts=1313039215&use_mirror=kent" -O nagios-plugins-1.4.15.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fnagiosgraph%2Ffiles%2F&ts=1313040777&use_mirror=puzzle -O nagiosgraph-1.4.4.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fnagiosgraph%2Ffiles%2F&ts=1313040777&use_mirror=puzzle" -O nagiosgraph-1.4.4.tar.gz;
 
 if [ ! -f "nagios-3.3.1.tar.gz" ];
 then
