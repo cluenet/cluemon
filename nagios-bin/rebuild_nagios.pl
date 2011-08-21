@@ -1411,7 +1411,7 @@ sub build_service_http_config {
 	my $vhost;
 	if( $sdata->{"vhost"} ) {
 		$vhost = '-H "' . $sdata->{"vhost"} . '"';
-		$vhost s/!/\\!/g;
+		$vhost =~ s/!/\\!/g;
 	}
 
 	my $args = [ $warning_timeout, $critical_timeout, $port, $vhost ];
