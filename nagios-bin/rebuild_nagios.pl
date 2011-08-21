@@ -870,6 +870,7 @@ sub write_configs {
 		ping => \&build_service_ping_config,
 		ssh => \&build_service_ssh_config,
 		rdp => \&build_service_rdp_config,
+		http -> \&build_service_http_config,
 	};
 
 	# First we build the contacts file
@@ -1370,6 +1371,51 @@ sub build_service_ping_config {
 
 	my $args = [ $warning_rta, $warning_pl, $critical_rta, $critical_pl, $packets ];
 	return &build_service_definition($server, $sdata, "check_ping", $args);
+}
+
+=head2 http
+HTTP check
+
+=head3 Arguments
+server - Server this config is for
+sdata - Hash of the specified service config
+
+=head3 Returns
+String containing the service definition
+
+=cut
+
+sub build_service_http_config {
+	my $server = shift;
+	my $sdata = shift;
+
+	if( ! $sdata->{"description"} || $sdata->{"description"} !~ /^[a-zA-Z0-9_\- ]$/ ) {
+		$sdata->{"description"} = "HTTP check";
+	}
+
+	my $warning_timeout = "5";
+	if( $sdata->{"warning_timeout"} && $sdata->{"warning_timeout"} =~ /^\d+$/ ) {
+		$warning_timeout = $sdata->{"warning_timeout"};
+	}
+
+	my $critical_timeout = "10";
+	if( $sdata->{"critical_timeout"} && $sdata->{"critical_timeout"} =~ /^\d+$/ ) {
+		$critical_timeout = $sdata->{"critical_timeout"};
+	}
+
+	my $port = "80";
+	if( $sdata->{"port"} && $sdata->{"port"} =~ /^\d+$/ ) {
+		$port = $sdata->{"port"};
+	}
+
+	my $vhost;
+	if( $sdata->{"vhost"} ) {
+		$vhost = '-H "' . $sdata->{"vhost"} . '"';
+		$vhost s/!/\\!/g;
+	}
+
+	my $args = [ $warning_timeout, $critical_timeout, $port, $vhost ];
+	return &build_service_definition($server, $sdata, "check_http", $args);
 }
 
 =head2 rdp
