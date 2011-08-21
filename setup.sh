@@ -94,7 +94,7 @@ then
 fi
 
 adduser --system --home=/usr/local/nagios --shell=/bin/false \
-	--disabled-password --disabled-login --group nagios nagios;
+	--disabled-password --disabled-login --group nagios;
 
 echo "Compiling nagios core";
 cd '/usr/local/src/nagios';
