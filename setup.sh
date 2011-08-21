@@ -28,51 +28,51 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 EOF
 
-cd "/tmp/";
+cd "/usr/local/src/";
 echo "Downloading code";
-wget "http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/nagios-3.3.1.tar.gz?ts=1313039358&use_mirror=dfn" -O nagios-3.3.1.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/nagios-3.3.1.tar.gz?ts=1313039358&use_mirror=dfn" -O nagios.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?ts=1313039215&use_mirror=kent" -O nagios-plugins-1.4.15.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?ts=1313039215&use_mirror=kent" -O nagios-plugins.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?ts=1313040777&use_mirror=puzzle" -O nagiosgraph-1.4.4.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?ts=1313040777&use_mirror=puzzle" -O nagiosgraph.tar.gz;
 
-if [ ! -f "nagios-3.3.1.tar.gz" ];
+if [ ! -f "nagios.tar.gz" ];
 then
 	echo "Failed to download nagios core";
 	exit 1;
 fi
 
-if [ ! -f "nagios-plugins-1.4.15.tar.gz" ];
+if [ ! -f "nagios-plugins.tar.gz" ];
 then
 	echo "Failed to download nagios plugins";
 	exit 1;
 fi
 
-if [ ! -f "nagiosgraph-1.4.4.tar.gz" ];
+if [ ! -f "nagiosgraph.tar.gz" ];
 then
 	echo "Failed to download nagios graph";
 	exit 1;
 fi
 
 echo "Extracting source code";
-mkdir "nagios-3.3.1"
-tar -xvf nagios-3.3.1.tar.gz -C nagios-3.3.1;
+mkdir "nagios"
+tar -xvf nagios.tar.gz -C nagios;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios core";
 	exit 2;
 fi
 
-mkdir "nagios-plugins-1.4.15"
-tar -xvf nagios-plugins-1.4.15.tar.gz -C nagios-plugins-1.4.15;
+mkdir "nagios-plugins"
+tar -xvf nagios-plugins.tar.gz -C nagios-plugins;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios plugins";
 	exit 2;
 fi
 
-mkdir "nagiosgraph-1.4.4"
-tar -xvf nagiosgraph-1.4.4.tar.gz -C nagiosgraph-1.4.4;
+mkdir "nagiosgraph"
+tar -xvf nagiosgraph.tar.gz -C nagiosgraph;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios graph";
@@ -97,7 +97,7 @@ adduser --system --home=/usr/local/nagios --shell=/bin/false \
 	--disabled-password --disabled-login --group nagios nagios;
 
 echo "Compiling nagios core";
-cd 'nagios-3.3.1';
+cd 'nagios';
 ./configure --prefix=/usr/local/nagios --enable-event-broker \
 	--enable-statuswrl --enable-statusmap --with-nagios-user=nagios \
 	--with-nagios-group=nagios --with-command-user=nagios \
@@ -110,7 +110,7 @@ make install-exfoliation;
 cd ..;
 
 echo "Compiling nagios plugins";
-cd nagios-plugins-1.4.15;
+cd nagios-plugins;
 ./configure --prefix=/usr/local/nagios/ --enable-perl-modules \
 	--with-nagios-user=nagios --with-nagios-group=nagios \
 	--without-world-permissions --with-ipv6;
@@ -119,7 +119,7 @@ make install;
 cd ..;
 
 echo "Compiling nagios graph";
-cd nagiosgraph-1.4.4;
+cd nagiosgraph;
 sed -i 's|/opt/nagiosgraph/etc|/usr/local/nagios/etc/nagiosgraph/|g'; cgi/*.cgi lib/insert.pl
 cp lib/insert.pl /usr/local/nagios/libexec
 cp cgi/*.cgi /usr/local/nagios/sbin
