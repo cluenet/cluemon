@@ -1237,7 +1237,7 @@ sub build_service_definition {
 	$service_config = "define serviceextinfo {\n";
 	$service_config .= "\thost_name " . $hostname . "\n";
 	$service_config .= "\tservice_description " . $sdata->{"description"} . "\n";
-	$service_config .= "\tnotes_url /nagios/cgi-bin/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$";
+	$service_config .= "\tnotes_url /nagios/cgi-bin/show.cgi?host=\$HOSTNAME\$&service=\$SERVICEDESC\$";
 	$service_config .= "onMouseOver='showGraphPopup(this)' onMouseOut='hideGraphPopup()'\n";
 	$service_config .= "}\n";
 
