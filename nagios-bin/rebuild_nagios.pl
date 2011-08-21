@@ -1234,7 +1234,7 @@ sub build_service_definition {
 	$service_config .= "}\n\n";
 
 	# Service extra info
-	$service_config = "define serviceextinfo {\n";
+	$service_config .= "define serviceextinfo {\n";
 	$service_config .= "\thost_name " . $hostname . "\n";
 	$service_config .= "\tservice_description " . $sdata->{"description"} . "\n";
 	$service_config .= "\tnotes_url /nagios/cgi-bin/show.cgi?host=\$HOSTNAME\$&service=\$SERVICEDESC\$";
