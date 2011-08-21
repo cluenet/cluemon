@@ -801,10 +801,6 @@ sub update_admins {
 		exit(3);
 	}
 
-	# Write the header
-	$data .= "# Managed by rebuild_nagios.pl\n";
-	$data .= "# Rebuilt at: " . pretty_time() . "\n\n";
-
 	# Read the lines
 	my($key, $value);
 	while ( <$fh> ) {
@@ -824,7 +820,11 @@ sub update_admins {
 				$key eq "authorized_for_all_service_commands"
 			) {
 				# Set the value to the new admin list
-				$value .= join("\@CLUENET.ORG,", $config->{"admins"});
+				$value = "";
+				for my $admin (@{$config->{"admins"}}) {
+					$value .= $admin . "\@CLUENET.ORG";
+				}
+				$value .= "\n";
 			}
 
 			# Add the key=value back to the data
