@@ -822,7 +822,7 @@ sub update_admins {
 				# Set the value to the new admin list
 				$value = "";
 				for my $admin (@{$config->{"admins"}}) {
-					$value .= $admin . "\@CLUENET.ORG";
+					$value .= $admin . "\@CLUENET.ORG,";
 				}
 				$value .= "\n";
 			}
@@ -1032,7 +1032,7 @@ sub build_contacts_config {
 		$contacts_config .= "\tservice_notification_period 24x7\n";
 
 		if( $udata->{"email"} ) {
-			$contacts_config .= "\t#email " . $udata->{"email"} . "\n";
+			$contacts_config .= "\temail " . $udata->{"email"} . "\n";
 		}
 
 		if( !$udata->{"alerts"} ) {
