@@ -1,5 +1,5 @@
 #!/bin/bash
-<<"EOF"
+<<'EOF'
 setup.sh - Setup script for Nagios
 
 SOURCE
@@ -28,75 +28,75 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 EOF
 
-cd "/usr/local/src/";
-echo "Downloading code";
-wget "http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/nagios-3.3.1.tar.gz?ts=1313039358&use_mirror=dfn" -O /usr/local/src/nagios.tar.gz;
+cd '/usr/local/src/';
+echo 'Downloading code';
+wget 'http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/nagios-3.3.1.tar.gz?ts=1313039358&use_mirror=dfn' -O /usr/local/src/nagios.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?ts=1313039215&use_mirror=kent" -O /usr/local/src/nagios-plugins.tar.gz;
+wget 'http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?ts=1313039215&use_mirror=kent' -O /usr/local/src/nagios-plugins.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?ts=1313040777&use_mirror=puzzle" -O /usr/local/src/nagiosgraph.tar.gz;
+wget 'http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?ts=1313040777&use_mirror=puzzle' -O /usr/local/src/nagiosgraph.tar.gz;
 
-if [ ! -f "/usr/local/src/nagios.tar.gz" ];
+if [ ! -f '/usr/local/src/nagios.tar.gz' ];
 then
-	echo "Failed to download nagios core";
+	echo 'Failed to download nagios core';
 	exit 1;
 fi
 
-if [ ! -f "/usr/local/src/nagios-plugins.tar.gz" ];
+if [ ! -f '/usr/local/src/nagios-plugins.tar.gz' ];
 then
-	echo "Failed to download nagios plugins";
+	echo 'Failed to download nagios plugins';
 	exit 1;
 fi
 
-if [ ! -f "/usr/local/src/nagiosgraph.tar.gz" ];
+if [ ! -f '/usr/local/src/nagiosgraph.tar.gz' ];
 then
-	echo "Failed to download nagios graph";
+	echo 'Failed to download nagios graph';
 	exit 1;
 fi
 
-echo "Extracting source code";
-mkdir "/usr/local/src/nagios"
+echo 'Extracting source code';
+mkdir '/usr/local/src/nagios'
 tar -xvf /usr/local/src/nagios.tar.gz -C /usr/local/src/nagios --strip 1;
-if [ "$?" -ne "0" ];
+if [ '$?' -ne '0' ];
 then
-	echo "Failed to extract nagios core";
+	echo 'Failed to extract nagios core';
 	exit 2;
 fi
 
-mkdir "/usr/local/src/nagios-plugins"
+mkdir '/usr/local/src/nagios-plugins'
 tar -xvf /usr/local/src/nagios-plugins.tar.gz -C /usr/local/src/nagios-plugins --strip 1;
-if [ "$?" -ne "0" ];
+if [ '$?' -ne '0' ];
 then
-	echo "Failed to extract nagios plugins";
+	echo 'Failed to extract nagios plugins';
 	exit 2;
 fi
 
-mkdir "/usr/local/src/nagiosgraph"
+mkdir '/usr/local/src/nagiosgraph'
 tar -xvf /usr/local/src/nagiosgraph.tar.gz -C /usr/local/src/nagiosgraph --strip 1;
-if [ "$?" -ne "0" ];
+if [ '$?' -ne '0' ];
 then
-	echo "Failed to extract nagios graph";
+	echo 'Failed to extract nagios graph';
 	exit 2;
 fi
 
-echo "Installing requirements";
+echo 'Installing requirements';
 apt-get install -y make gcc g++ libgd2-xpm libgd2-xpm-dev libgd2-xpm \
 	libpng12-dev libjpeg62-dev libgd-tools libpng3-dev rrdtool perl \
 	perl-base perl-modules libcalendar-simple-perl libgd-gd2-perl perlmagick \
 	librrds-perl liburi-perl;
 
-echo "Creating user/group";
+echo 'Creating user/group';
 id nagios > /dev/null 2>&1;
-if [ "$?" -eq "0" ];
+if [ '$?' -eq '0' ];
 then
-	echo "Nagios user already exists, ABORTING!";
+	echo 'Nagios user already exists, ABORTING!';
 	exit 3;
 fi
 
 adduser --system --home=/usr/local/nagios --shell=/bin/false \
 	--disabled-password --disabled-login --group nagios;
 
-echo "Compiling nagios core";
+echo 'Compiling nagios core';
 cd '/usr/local/src/nagios';
 ./configure --prefix=/usr/local/nagios --enable-event-broker \
 	--enable-statuswrl --enable-statusmap --with-nagios-user=nagios \
@@ -109,7 +109,7 @@ make install-commandmode;
 make install-exfoliation;
 cd ..;
 
-echo "Compiling nagios plugins";
+echo 'Compiling nagios plugins';
 cd '/usr/local/src/nagios-plugins';
 ./configure --prefix=/usr/local/nagios/ --enable-perl-modules \
 	--with-nagios-user=nagios --with-nagios-group=nagios \
@@ -118,9 +118,9 @@ make;
 make install;
 cd ..;
 
-echo "Compiling nagios graph";
+echo 'Compiling nagios graph';
 cd '/usr/local/src/nagiosgraph';
-sed -i 's|/opt/nagiosgraph/etc|/usr/local/nagios/etc/nagiosgraph/|g'; cgi/*.cgi lib/insert.pl
+sed -i 's|/opt/nagiosgraph/etc|/usr/local/nagios/etc/nagiosgraph/|g' cgi/*.cgi lib/insert.pl;
 cp lib/insert.pl /usr/local/nagios/libexec
 cp cgi/*.cgi /usr/local/nagios/sbin
 
@@ -132,15 +132,21 @@ sed -i 's|/nagiosgraph/nagiosgraph.js|/nagios/nagiosgraph.js|' share/nagiosgraph
 cp share/nagiosgraph.ssi /usr/local/nagios/share/ssi/common-header.ssi
 cd ..;
 
-echo "Downloading cluemon"
-git clone git://github.com/cluenet/cluemon.git /usr/local/src/cluemon
-cd /usr/local/src/cluemon/
+echo 'Downloading cluemon'
+if [ -d '/usr/local/src/cluemon/' ];
+then
+	cd '/usr/local/src/cluemon/';
+	git pull;
+else
+	git clone git://github.com/cluenet/cluemon.git /usr/local/src/cluemon
+	cd '/usr/local/src/cluemon/'
+fi
 
-echo "Installing configs";
+echo 'Installing configs';
 rm -rvf /usr/local/nagios/etc/*;
 cp -vr nagios-etc/* /usr/local/nagios/etc/;
 
-echo "Installing scripts";
+echo 'Installing scripts';
 chown nagios:nagios nagios-bin/rebuild_nagios.pl
 chmod 750 nagios-bin/rebuild_nagios.pl
 cp -av nagios-bin/rebuild_nagios.pl /usr/local/nagios/bin/;
@@ -153,12 +159,12 @@ chown nagios:nagios nagios-libexec/*
 chmod 750 nagios-libexec/*
 cp -av nagios-libexec/* /usr/local/nagios/libexec/
 
-echo "Installing crontab";
+echo 'Installing crontab';
 echo '0 * * * * /usr/local/bin/rebuild_nagios.pl' | \
 	crontab -u nagios -;
 
-echo "Adding nagiosbot to supervisord";
-cat > /etc/supervisor/conf.d/nagiosbot.conf <<"EOF"
+echo 'Adding nagiosbot to supervisord';
+cat > /etc/supervisor/conf.d/nagiosbot.conf <<'EOF'
 [program:nagiosbot]
 command=python /usr/local/nagios/bin/nagiosbot.py
 directory=/usr/local/nagios/bin/
@@ -170,13 +176,13 @@ redirect_stderr=true
 stopsignal=QUIT
 EOF
 
-echo "Adding nagios to apache";
-cat > /etc/apache2/sites-enabled/nagios <<"EOF"
+echo 'Adding nagios to apache';
+cat > /etc/apache2/sites-enabled/nagios <<'EOF'
 # Rewrite HTTP to HTTPS
 <VirtualHost *:80>
 	ServerName monitoring.cluenet.org
 	ServerAdmin damian@cluenet.org
-	DocumentRoot "/var/www/monitoring"
+	DocumentRoot '/var/www/monitoring'
 
 	# Redirect all traffic to https
 	RewriteEngine on
@@ -188,7 +194,7 @@ cat > /etc/apache2/sites-enabled/nagios <<"EOF"
 <VirtualHost *:443>
 	ServerName monitoring.cluenet.org
 	ServerAdmin damian@cluenet.org
-	DocumentRoot "/var/www/monitoring"
+	DocumentRoot '/var/www/monitoring'
 
 	# Enable ssl
 	SSLEngine on
@@ -200,7 +206,7 @@ cat > /etc/apache2/sites-enabled/nagios <<"EOF"
 
 	# /nagios/cgi-bin
 	ScriptAlias /nagios/cgi-bin /usr/local/nagios/sbin
-	<Directory "/usr/local/nagios/sbin">
+	<Directory '/usr/local/nagios/sbin'>
 		Options ExecCGI
 		AllowOverride None
 		Order allow,deny
@@ -208,7 +214,7 @@ cat > /etc/apache2/sites-enabled/nagios <<"EOF"
 
 		# Auth users against krb
 		AuthType Kerberos
-		AuthName "Cluemon - use your LDAP details"
+		AuthName 'Cluemon - use your LDAP details'
 		KrbAuthRealms CLUENET.ORG
 		KrbServiceName http
 		KrbMethodNegotiate on
@@ -220,7 +226,7 @@ cat > /etc/apache2/sites-enabled/nagios <<"EOF"
 
 	# /nagios
 	Alias /nagios /usr/local/nagios/share
-	<Directory "/usr/local/nagios/share">
+	<Directory '/usr/local/nagios/share'>
 		Options None
 		AllowOverride None
 		Order allow,deny
@@ -228,7 +234,7 @@ cat > /etc/apache2/sites-enabled/nagios <<"EOF"
 
 		# Auth users against krb
 		AuthType Kerberos
-		AuthName "Cluemon - use your LDAP details"
+		AuthName 'Cluemon - use your LDAP details'
 		KrbAuthRealms CLUENET.ORG
 		KrbServiceName http
 		KrbMethodNegotiate on
@@ -242,5 +248,5 @@ EOF
 /etc/init.d/apache2 restart
 supervisorctl reread
 
-echo "Running rebuild";
+echo 'Running rebuild';
 /usr/local/bin/rebuild_nagios.pl;
