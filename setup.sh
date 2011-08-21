@@ -30,49 +30,49 @@ EOF
 
 cd "/usr/local/src/";
 echo "Downloading code";
-wget "http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/nagios-3.3.1.tar.gz?ts=1313039358&use_mirror=dfn" -O nagios.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagios/nagios-3.x/nagios-3.3.1/nagios-3.3.1.tar.gz?ts=1313039358&use_mirror=dfn" -O /usr/local/src/nagios.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?ts=1313039215&use_mirror=kent" -O nagios-plugins.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagiosplug/nagiosplug/1.4.15/nagios-plugins-1.4.15.tar.gz?ts=1313039215&use_mirror=kent" -O /usr/local/src/nagios-plugins.tar.gz;
 
-wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?ts=1313040777&use_mirror=puzzle" -O nagiosgraph.tar.gz;
+wget "http://downloads.sourceforge.net/project/nagiosgraph/nagiosgraph/1.4.4/nagiosgraph-1.4.4.tar.gz?ts=1313040777&use_mirror=puzzle" -O /usr/local/src/nagiosgraph.tar.gz;
 
-if [ ! -f "nagios.tar.gz" ];
+if [ ! -f "/usr/local/src/nagios.tar.gz" ];
 then
 	echo "Failed to download nagios core";
 	exit 1;
 fi
 
-if [ ! -f "nagios-plugins.tar.gz" ];
+if [ ! -f "/usr/local/src/nagios-plugins.tar.gz" ];
 then
 	echo "Failed to download nagios plugins";
 	exit 1;
 fi
 
-if [ ! -f "nagiosgraph.tar.gz" ];
+if [ ! -f "/usr/local/src/nagiosgraph.tar.gz" ];
 then
 	echo "Failed to download nagios graph";
 	exit 1;
 fi
 
 echo "Extracting source code";
-mkdir "nagios"
-tar -xvf nagios.tar.gz -C nagios;
+mkdir "/usr/local/src/nagios"
+tar -xvf /usr/local/src/nagios.tar.gz -C /usr/local/src/nagios;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios core";
 	exit 2;
 fi
 
-mkdir "nagios-plugins"
-tar -xvf nagios-plugins.tar.gz -C nagios-plugins;
+mkdir "/usr/local/src/nagios-plugins"
+tar -xvf /usr/local/src/nagios-plugins.tar.gz -C /usr/local/src/nagios-plugins;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios plugins";
 	exit 2;
 fi
 
-mkdir "nagiosgraph"
-tar -xvf nagiosgraph.tar.gz -C nagiosgraph;
+mkdir "/usr/local/src/nagiosgraph"
+tar -xvf /usr/local/src/nagiosgraph.tar.gz -C /usr/local/src/nagiosgraph;
 if [ "$?" -ne "0" ];
 then
 	echo "Failed to extract nagios graph";
@@ -94,10 +94,10 @@ then
 fi
 
 adduser --system --home=/usr/local/nagios --shell=/bin/false \
-	--disabled-password --disabled-login --group nagios nagios;
+	--disabled-password --disabled-login --group=nagios nagios;
 
 echo "Compiling nagios core";
-cd 'nagios';
+cd '/usr/local/src/nagios';
 ./configure --prefix=/usr/local/nagios --enable-event-broker \
 	--enable-statuswrl --enable-statusmap --with-nagios-user=nagios \
 	--with-nagios-group=nagios --with-command-user=nagios \
@@ -110,7 +110,7 @@ make install-exfoliation;
 cd ..;
 
 echo "Compiling nagios plugins";
-cd nagios-plugins;
+cd '/usr/local/src/nagios-plugins';
 ./configure --prefix=/usr/local/nagios/ --enable-perl-modules \
 	--with-nagios-user=nagios --with-nagios-group=nagios \
 	--without-world-permissions --with-ipv6;
@@ -119,7 +119,7 @@ make install;
 cd ..;
 
 echo "Compiling nagios graph";
-cd nagiosgraph;
+cd '/usr/local/src/nagiosgraph';
 sed -i 's|/opt/nagiosgraph/etc|/usr/local/nagios/etc/nagiosgraph/|g'; cgi/*.cgi lib/insert.pl
 cp lib/insert.pl /usr/local/nagios/libexec
 cp cgi/*.cgi /usr/local/nagios/sbin
@@ -133,7 +133,7 @@ cp share/nagiosgraph.ssi /usr/local/nagios/share/ssi/common-header.ssi
 cd ..;
 
 echo "Installing configs";
-rm -rf /usr/local/nagios/etc/*;
+rm -rvf /usr/local/nagios/etc/*;
 cp -vr nagios-etc/* /usr/local/nagios/etc/;
 
 echo "Installing scripts";
