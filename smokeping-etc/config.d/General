@@ -1,0 +1,9 @@
+*** General ***
+
+@include /etc/smokeping/config.d/pathnames
+
+owner    = Damian
+contact  = damian@cluenet.org
+cgiurl   = http://monitoring.cluenet.org/smokeping/smokeping.cgi
+mailhost = localhost
+syslogfacility = local0

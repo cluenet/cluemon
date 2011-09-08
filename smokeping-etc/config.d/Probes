@@ -1,0 +1,17 @@
+*** Probes ***
+
++ FPing
+
+binary = /usr/bin/fping
+
++ DNS
+
+binary = /usr/bin/dig
+lookup = cluenet.org
+pings = 5
+step = 180
+
++ Curl
+binary = /usr/bin/curl
+step = 60
+urlformat = http://%host%/

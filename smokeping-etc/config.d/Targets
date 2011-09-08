@@ -1,0 +1,147 @@
+*** Targets ***
+probe = FPing
+
+menu = Top
+title = Network Latency Grapher
+remark = Welcome to the SmokePing site for ClueNet
+
+# ClueNet Services
++ Services
+menu = ClueNet Service Latency
+title = ClueNet :: Service Latency
+
+++ DNS
+probe = DNS
+menu = DNS Latency
+title = ClueNet :: DNS Latency
+
++++ ns1
+host = ns1.cluenet.org
+
++++ ns2
+host = ns2.cluenet.org
+
++++ ns3
+host = ns3.cluenet.org
+
+++ HTTP
+probe = Curl
+menu = HTTP Latency
+title = ClueNet :: HTTP Latency
+
++++ a.core
+host = a.core.cluenet.org
+
+# ClueNet Servers
+@include /etc/smokeping/config.d/cluenet
+
+# Root DNS Servers
++ RootServers
+menu = Root DNS Server Latency
+title = Root DNS Server Latency
+probe = DNS
+
+++ A.ROOT-SERVERS.NET
+host = A.ROOT-SERVERS.NET
+
+++ B.ROOT-SERVERS.NET
+host = B.ROOT-SERVERS.NET
+
+++ C.ROOT-SERVERS.NET
+host = C.ROOT-SERVERS.NET
+
+++ D.ROOT-SERVERS.NET
+host = D.ROOT-SERVERS.NET
+
+++ E.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ F.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ G.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ H.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ I.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ J.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ K.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ L.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+++ M.ROOT-SERVERS.NET
+host = E.ROOT-SERVERS.NET
+
+# Worldwide HTTP servers
++ Wordwide
+menu = Worldwide HTTP Latency
+title = Worldwide HTTP Server Latency
+probe = Curl
+
+++ FaceBook
+menu = FaceBook website
+host = facebook.com
+
+++ FaceBookAPI
+menu = FaceBook API website
+host = graph.facebook.com
+
+++ Google
+menu = Google.com website
+host = google.com
+
+++ Twitter
+menu = Twitter.com website
+host = twitter.com
+
+++ eBay
+menu = eBay.co.uk website
+host = ebay.co.uk
+
+++ Wikipedia
+menu = Wikipedia.org website
+host = wikipedia.org
+
+++ Kernel
+menu = Kernel.org website
+host = kernel.org
+
+++ KernelMirrors
+menu = Kernel Mirrors website
+host = mirrors.kernel.org
+
+++ Rackspace
+menu = Rackspace website
+host = rackspace.com
+
+++ HurricaneElectric
+menu = Hurricane Electric website
+host = he.com
+
+++ ThePlanet
+menu = The Planet website
+host = theplanet.com
+
+++ Softlayer
+menu = Softlayer website
+host = softlayer.com
+
+++ BBC
+menu = BBC website
+host = bbc.co.uk
+
+++ UKFast
+menu = UKFast website
+host = ukfast.co.uk
+
+++ Melbourne
+menu = Melbourne website
+host = melbourne.co.uk
