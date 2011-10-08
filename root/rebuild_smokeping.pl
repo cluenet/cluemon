@@ -15,6 +15,9 @@ use Fcntl qw(:flock);
 # We like LDAP
 use Net::LDAP;
 
+# For checking if stuff has changed
+use Digest::MD5;
+
 # Good for debugging
 use Data::Dumper;
 
@@ -59,7 +62,7 @@ Hash of our config values
 =head2 Required options
 
 config_file - The file to write the servers into
-tmp_dir - The dir we stick temporary stuff in
+tmp_dir - The dir we stick temporary stuff in 
 
 =cut
 
@@ -74,6 +77,25 @@ my $VERSION = "0.1";
 our($logger, $ldap);
 
 =head1 METHODS
+
+=head2 hexdigest_file
+Gets the MD5 digest of a files contents
+
+=head3 Arguments
+file_path - Path to file
+
+=head3 Returns
+String containing the MD5 digest
+
+=cut
+
+sub hexdigest_file {
+	open(my $fh, shift);
+	binmode($fh);
+	my $checksum = Digest::MD5->new->addfile(*$fh)->hexdigest;
+	close($fh);
+	return $checksum;
+}
 
 =head2 run
 Sets up everything and kicks off the process.
@@ -128,19 +150,30 @@ sub run {
 	$logger->info("Starting get_servers");
 	my $servers = get_servers();
 
+	# Get the current file hash
+	my $oldhash = hexdigest_file( $config->{"config_file"} );
+
 	# Write the config
 	$logger->info("Starting write_config");
 	write_config($servers);
 
-	# Rebuild
-	$logger->info("Starting reload_smokeping");
-	reload_smokeping();
+	# Check the new hash against the old hash
+	my $newhash = hexdigest_file( $config->{"config_file"} );
 
-	if( !flock($lock_fh, LOCK_UN) ) {
-		$logger->error("Could not unlock smokeping_rebuild.flock file");
-		notify_irc("Could not unlock smokeping_rebuild.flock file: $!");
+	# Check if we need to rebuild
+	if( $newhash ne $oldhash ) {
+		# Rebuild
+		$logger->info("Starting reload_smokeping");
+		reload_smokeping();
+
+		if( !flock($lock_fh, LOCK_UN) ) {
+			$logger->error("Could not unlock smokeping_rebuild.flock file");
+			notify_irc("Could not unlock smokeping_rebuild.flock file: $!");
+		}
+		close($lock_fh);
+	} else {
+		$logger->info("No reload required");
 	}
-	close($lock_fh);
 }
 
 =head2 get_servers
@@ -240,7 +273,7 @@ sub write_config {
 	}
 
 	print $fh "+ Servers\n";
-	print $fh "menu = Server Latency\n";
+	print $fh "menu = ClueNet Server Latency\n";
 	print $fh "title = ClueNet :: Server Latency\n\n";
 
 	for my $server ( @{$servers} ) {
@@ -271,23 +304,23 @@ sub reload_smokeping {
 	if( "$?" eq 0 ) {
 		$logger->info("smokeping config looks valid");
 
-		# Check if we are running
-		$status = qx(/etc/init.d/smokeping status 2>&1);
+		# Try and do a reload
+		$status = qx(/etc/init.d/smokeping reload 2>&1);
 		if( "$?" eq 0 ) {
-			# Try and do a reload
-			$status = qx(/etc/init.d/smokeping reload 2>&1);
+			$logger->info("smokeping reloaded");
+		}
+
+		# Check we are running
+		$status = qx(/etc/init.d/smokeping status 2>&1);
+		if( "$?" ne 0 ) {
+			$logger->info("smokeping not running");
+
+			# Try and start smokeping
+			$status = qx(/etc/init.d/smokeping start 2>&1);
 			if( "$?" eq 0 ) {
-				$logger->info("smokeping reloaded");
+				$logger->info("smokeping started");
 			} else {
-				$logger->fatal("Could not reload smokeping:\n" . $status);
-			}
-		} else {
-			# Try and do a restart
-			$status = qx(/etc/init.d/smokeping restart 2>&1);
-			if( "$?" eq 0 ) {
-				$logger->info("smokeping restarted");
-			} else {
-				$logger->fatal("Could not restart smokeping:\n" . $status);
+				$logger->fatal("Could not start smokeping:\n" . $status);
 			}
 		}
 	} else {

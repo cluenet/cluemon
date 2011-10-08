@@ -31,6 +31,10 @@ use YAML;
 # Mediawiki breaks YAML in YAML so we use XML :(
 use XML::Simple;
 
+# For checking if stuff has changed
+use Digest::MD5;
+use Cwd 'abs_path';
+
 # Good for debugging
 use Data::Dumper;
 
@@ -62,6 +66,9 @@ Damian Zaremba <damian@damianzaremba.co.uk>.
 =head1 CHANGE LOG
 * v0.1 - 15 Aug 2011
 	- Initial version
+* v0.2 - 08 Oct 2011
+	- Added in some logic so we don't reload nagios unless the configs have
+	actually changed.
 
 =head1 LICENSE
 This program is free software: you can redistribute it and/or modify
@@ -104,12 +111,31 @@ my $config = {
 		"crispy",
 	],
 };
-my $VERSION = "0.1";
+my $VERSION = "0.2";
 
 # Stuff we need everywhere
 our($logger, $ldap);
 
 =head1 METHODS
+
+=head2 hexdigest_file
+Figures out the MD5 digest of a file
+
+=head3 Arguments
+file_path - Path to the file to get the digest for
+
+=head3 Returns
+digest - MD5 digest of file content
+
+=cut
+
+sub hexdigest_file {
+	open(my $fh, shift);
+	binmode($fh);
+	my $checksum = Digest::MD5->new->addfile(*$fh)->hexdigest;
+	close($fh);
+	return $checksum;
+}
 
 =head2 pretty_time
 Returns a pretty timestamp
@@ -199,6 +225,22 @@ sub run {
 		exit(2);
 	}
 
+	my $old_configs = {};
+	my $new_configs = {};
+	my $shouldreload = 0;
+
+	opendir( my $dh, $config->{"config_dir"} );
+	foreach my $path ( readdir($dh) ) {
+		next if($path eq '.' || $path eq '..');
+		my $realpath = abs_path($config->{"config_dir"}.$path);
+		if( $path =~ /((.*)\/)?(.*)\.cfg$/ ){
+			my $checksum = hexdigest_file($realpath);
+			$old_configs->{$path} = $checksum;
+		}
+	}
+	$old_configs->{'CGI_CONFIG'} = hexdigest_file($config->{'cgi_config'});
+	closedir( $dh );
+
 	# Update the admins
 	update_admins();
 
@@ -210,7 +252,49 @@ sub run {
 
 	clear_configs();
 	write_configs($servers, $users);
-	reload_nagios();
+
+	if( $old_configs->{'CGI_CONFIG'} eq hexdigest_file($config->{'cgi_config'}) ) {
+		# CGI config is the same - drop this out the hash then check everything else
+		delete($old_configs->{'CGI_CONFIG'});
+
+		opendir( my $dh, $config->{"config_dir"} );
+		foreach my $path ( readdir($dh) ) {
+			next if($path eq '.' || $path eq '..');
+			my $realpath = abs_path($config->{"config_dir"}.$path);
+			if( $path =~ /((.*)\/)?(.*)\.cfg$/ ){
+				my $checksum = hexdigest_file($realpath);
+
+				# Check if this is a new file
+				# IE it doesn't exist in the $old_configs hash
+				if( !defined( $old_configs->{$path} ) ) {
+					$shouldreload = 1;
+					last;
+
+				# Check if this checksum doesn't match
+				# IE the file has changed
+				} elsif( $old_configs->{$path} ne $checksum  ) {
+					$shouldreload = 1;
+					last;
+				}
+				$new_configs->{$path} = $checksum;
+			}
+		}
+		closedir( $dh );
+
+		# Now loop back over the old_configs hash to check for any deleted files
+		foreach my $old_config (keys(%$old_configs)) {
+			if( !defined( $new_configs->{$old_config} ) ) {
+				$shouldreload = 1;
+				last;
+			}
+		}
+	}
+
+	if( $shouldreload ) {
+		reload_nagios();
+	} else {
+		$logger->info("No rebuild needed");
+	}
 
 	if( !flock($lock_fh, LOCK_UN) ) {
 		$logger->error("Could not unlock rebuild.flock file");
@@ -875,7 +959,6 @@ sub write_configs {
 
 	# First we build the contacts file
 	my $contacts = "# Managed by rebuild_nagios.pl\n";
-	$contacts .= "# Rebuilt at: " . pretty_time() . "\n";
 
 	$logger->info("Starting build_contacts_config");
 	$contacts .= &build_contacts_config($users);
@@ -891,7 +974,6 @@ sub write_configs {
 
 	# Next we build the hostgroups file
 	my $hostgroups = "# Managed by rebuild_nagios.pl\n";
-	$hostgroups .= "# Rebuilt at: " . pretty_time() . "\n";
 
 	$logger->info("Starting build_hostgroups_config");
 	$hostgroups .= &build_hostgroups_config($servers);
@@ -908,7 +990,6 @@ sub write_configs {
 	# Now we build each servers file
 	for my $server ( keys( %$servers ) ) {
 		my $host = "# Managed by rebuild_nagios.pl\n";
-		$host .= "# Rebuilt at: " . pretty_time() . "\n";
 
 		# Host definition
 		$logger->info("Starting build_host_config for " . $server);

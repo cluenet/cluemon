@@ -112,11 +112,7 @@ host = wikipedia.org
 
 ++ Kernel
 menu = Kernel.org website
-host = kernel.org
-
-++ KernelMirrors
-menu = Kernel Mirrors website
-host = mirrors.kernel.org
+host = www.kernel.org
 
 ++ Rackspace
 menu = Rackspace website
